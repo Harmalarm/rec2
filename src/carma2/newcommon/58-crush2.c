@@ -71,7 +71,7 @@ float gWheel_circ_to_width = .16f;
 
 // FUNCTION: CARMA2_HW 0x0043f5f0
 // FUNCTION: CARMA2_SW 0x0043f6d0
-void C2_HOOK_FASTCALL KnackerThisCar(tCar_spec* pCar) {
+inline void C2_HOOK_FASTCALL KnackerThisCar(tCar_spec* pCar) {
 
     if (pCar->invulnerable_no_wastage) {
         return;
