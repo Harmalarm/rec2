@@ -1415,9 +1415,28 @@ tU16 C2_HOOK_FASTCALL PaletteEntry16Bit(br_pixelmap* pPal, int pEntry) {
     }
 }
 
-// STUB: CARMA2_HW 0x00517050
+// FUNCTION: CARMA2_HW 0x00517050
 tU16 C2_HOOK_FASTCALL Colour24BitTo16Bit(br_colour pColour) {
-    NOT_IMPLEMENTED();
+    int red;
+    int green;
+    int blue;
+
+    switch (gBack_screen->type) {
+    case BR_PMT_RGB_555:
+        red = (pColour >> 9) & 0x7c00;
+        green = (pColour >> 6) & 0x03e0;
+        blue = (pColour >> 3) & 0x001f;
+        break;
+    case BR_PMT_RGB_565:
+        red = (pColour >> 8) & 0xf800;
+        green = (pColour >> 5) & 0x07e0;
+        blue = (pColour >> 3) & 0x001f;
+        break;
+    default:
+        BrFailure("Unsupported back buffer type.");
+        break;
+    }
+    return red | green | blue;
 }
 
 // FUNCTION: CARMA2_HW 0x005170c0
