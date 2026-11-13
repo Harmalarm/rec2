@@ -631,7 +631,8 @@ br_pixelmap* C2_HOOK_FASTCALL GetThisFuckingPixelmapPleaseMrTwatter(const char* 
     result = NULL;
 #ifdef REC2_HW
     PathCat(the_path, pFolder, "PIXIES.P16");
-#else
+#endif
+#ifdef REC2_SW
     PathCat(the_path, pFolder, "PIXIES.P08");
 #endif
     f = PFfopen(the_path, "rb");
