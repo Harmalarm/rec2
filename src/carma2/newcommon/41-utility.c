@@ -36,16 +36,16 @@ tU32 last_service;
 
 // GLOBAL: CARMA2_HW 0x006b5f40
 // GLOBAL: CARMA2_SW 0x006acc20
-char* gMisc_strings[300];
+char* gMisc_strings[300] = { 0 };
+
+// GLOBAL: CARMA2_HW 0x006b63f0
+br_pixelmap* gPalette_source = NULL;
 
 // GLOBAL: CARMA2_HW 0x0074ca04
 tMaterial_exception* gMaterial_exceptions;
 
 // GLOBAL: CARMA2_HW 0x006b63f4
 br_pixelmap* g16bit_palette;
-
-// GLOBAL: CARMA2_HW 0x006b63f0
-br_pixelmap* gPalette_source;
 
 // GLOBAL: CARMA2_HW 0x006abef4
 // GLOBAL: CARMA2_SW 0x006a5444
@@ -933,6 +933,13 @@ void C2_HOOK_FASTCALL DRPixelmapRectangleCopy(br_pixelmap* dst, br_int_16 dx, br
     BrPixelmapRectangleCopy(dst, dx, dy, src, sx, sy, w, h);
 }
 
+// FUNCTION: CARMA2_HW 0x005156d0
+// FUNCTION: CARMA2_SW 0x00510b40
+void C2_HOOK_FASTCALL DRPixelmapRectangleFill(br_pixelmap* dst, br_int_16 x, br_int_16 y, br_uint_16 w, br_uint_16 h, br_uint_32 colour) {
+
+    BrPixelmapRectangleFill(dst, x, y, w, h, colour);
+}
+
 // FUNCTION: CARMA2_HW 0x00515700
 // FUNCTION: CARMA2_SW 0x00510b70
 int C2_HOOK_FASTCALL NormalSideOfPlane(br_vector3* pPoint, br_vector3* pNormal, br_scalar pD) {
@@ -1043,6 +1050,7 @@ br_actor* C2_HOOK_FASTCALL CloneActor(br_actor* pActor) {
 }
 
 // FUNCTION: CARMA2_HW 0x00515b80
+// FUNCTION: CARMA2_SW 0x00510ff0
 void C2_HOOK_FASTCALL CalcActorGlobalPos(br_vector3* pResult, br_actor* pActor) {
     br_vector3 tv;
 
@@ -1058,12 +1066,14 @@ void C2_HOOK_FASTCALL CalcActorGlobalPos(br_vector3* pResult, br_actor* pActor) 
 }
 
 // FUNCTION: CARMA2_HW 0x00515c20
+// FUNCTION: CARMA2_SW 0x00511090
 float C2_HOOK_STDCALL frac(float pN) {
 
     return pN - (float)(int)pN;
 }
 
 // FUNCTION: CARMA2_HW 0x00515d90
+// FUNCTION: CARMA2_SW 0x00511200
 intptr_t C2_HOOK_CDECL FindMaterialCB(br_actor* pActor, void* data) {
     const char* name = data;
     br_model* model = pActor->model;
@@ -1086,6 +1096,7 @@ intptr_t C2_HOOK_CDECL FindMaterialCB(br_actor* pActor, void* data) {
 }
 
 // FUNCTION: CARMA2_HW 0x00515c40
+// FUNCTION: CARMA2_SW 0x005110b0
 br_material* C2_HOOK_FASTCALL FindMaterial(const char* pName, br_actor* pActor, int pRecursive) {
 
     if (pRecursive) {
@@ -1293,12 +1304,42 @@ void C2_HOOK_FASTCALL DRScaleModel(br_model* pModel, float pScale) {
 }
 
 // FUNCTION: CARMA2_HW 0x005162a0
+// FUNCTION: CARMA2_SW 0x00511710
 float C2_HOOK_FASTCALL DistanceFromFaceND(const br_vector3* pP, const br_vector3* pN, br_scalar pF) {
 
     return BrVector3Dot(pP, pN) - pF;
 }
 
+// FUNCTION: CARMA2_HW 0x005162d0
+// FUNCTION: CARMA2_SW 0x00511740
+void C2_HOOK_FASTCALL DRVector4Negate(br_vector4* pDst, const br_vector4* pSrc) {
+    pDst->v[0] = -pSrc->v[0];
+    pDst->v[1] = -pSrc->v[1];
+    pDst->v[2] = -pSrc->v[2];
+    pDst->v[3] = -pSrc->v[3];
+}
+
+// FUNCTION: CARMA2_HW 0x005162f0
+// FUNCTION: CARMA2_SW 0x00511760
+void C2_HOOK_FASTCALL DRVector4Set(br_vector4* pDst, float pX, float pY, float pZ, float pU) {
+    pDst->v[0] = pX;
+    pDst->v[1] = pY;
+    pDst->v[2] = pZ;
+    pDst->v[3] = pU;
+}
+
+// FUNCTION: CARMA2_HW 0x00516310
+// FUNCTION: CARMA2_SW 0x00511780
+void C2_HOOK_FASTCALL DRPlaneEquation(br_vector4* pDst, const br_vector3* pN, const br_vector3* pP) {
+    pDst->v[0] = pN->v[0];
+    pDst->v[1] = pN->v[1];
+    pDst->v[2] = pN->v[2];
+    /* FIXME: this should be negative... */
+    pDst->v[3] = BrVector3Dot(pP, pN);
+}
+
 // FUNCTION: CARMA2_HW 0x00516350
+// FUNCTION: CARMA2_SW 0x005117c0
 int C2_HOOK_FASTCALL DRVector3NonZero(const br_vector3* pV) {
     if (pV->v[0] == 0.f && pV->v[1] == 0.f && pV->v[2] == 0.f) {
         return 0;
@@ -1308,6 +1349,7 @@ int C2_HOOK_FASTCALL DRVector3NonZero(const br_vector3* pV) {
 }
 
 // FUNCTION: CARMA2_HW 0x00516390
+// FUNCTION: CARMA2_SW 0x00511800
 void C2_HOOK_FASTCALL DRVector3Diminish(br_vector3* pV1, const br_vector3* pV2) {
     br_vector3 v1 = *pV1;
 
@@ -1446,9 +1488,18 @@ tU16 C2_HOOK_FASTCALL PaletteEntry16Bit(br_pixelmap* pPal, int pEntry) {
     }
 }
 
-// STUB: CARMA2_HW 0x00517050
+// FUNCTION: CARMA2_HW 0x00517050
 tU16 C2_HOOK_FASTCALL Colour24BitTo16Bit(br_colour pColour) {
-    NOT_IMPLEMENTED();
+
+    switch (gBack_screen->type) {
+    default:
+        BrFailure("Unsupported back buffer type.");
+        break;
+    case BR_PMT_RGB_565:
+        return (((((pColour >> 3) & 0x1f0000) | (pColour & 0xfc00)) >> 2) | (pColour & 0xf8)) >> 3;
+    case BR_PMT_RGB_555:
+        return (((((pColour >> 3) & 0x1f0000) | (pColour & 0xf800)) >> 3) | (pColour & 0xf8)) >> 3;
+    }
 }
 
 // FUNCTION: CARMA2_HW 0x005170c0
@@ -1999,6 +2050,29 @@ void C2_HOOK_FASTCALL PixelmapSwapByteOrder(br_pixelmap* pMap) {
         row_ptr += pMap->row_bytes;
     }
 #endif
+}
+
+// FUNCTION: CARMA2_HW 0x005192a0
+// FUNCTION: CARMA2_SW 0x00512d80
+void C2_HOOK_FASTCALL ConvertRGB565ToARGB1555(br_uint_16* pPixel) {
+
+    *pPixel = ((*pPixel >> 1) & 0x7fe0) + (*pPixel & 0x1f);
+}
+
+// FUNCTION: CARMA2_HW 0x005192c0
+// FUNCTION: CARMA2_SW 0x00512da0
+void C2_HOOK_FASTCALL ConvertARGB4444ToARGB1555(br_uint_16* pPixel) {
+    br_uint_16 v;
+    br_uint_16 r, g, b;
+
+    v = *pPixel;
+    r = v & 0xf00;
+    g = v & 0x0f0;
+    b = v & 0x00f;
+    *pPixel = (r << 3) + (g << 2) + (b << 1);
+    if (v & 0xf000) {
+        *pPixel += 0x8000;
+    }
 }
 
 // FUNCTION: CARMA2_HW 0x005193f0

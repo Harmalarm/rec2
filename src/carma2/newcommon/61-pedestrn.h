@@ -15,6 +15,8 @@
 extern int gPed_count_limbed_actors;
 extern br_actor* gLimbs_actor;
 
+extern tPedForms_vtable* gPed_vtable;
+
 extern int gPed_retain_root_mode;
 
 extern tPed_remap* gPed_remaps[10];
@@ -22,6 +24,7 @@ extern tPed_remap* gPed_remaps[10];
 extern tPed_personality* gPed_personalities[50];
 extern float gPedestrian_speed_factor;
 extern int gSelected_ped;
+extern int gCount_active_peds;
 extern int gPeds_suicidal;
 extern int gExploding_pedestrians;
 extern tNapalm_bolt gNapalm_bolts[5];
@@ -29,15 +32,28 @@ extern int gCount_changed_points;
 extern br_vector3 gChanged_points[10];
 extern int gPed_nearness;
 extern tTWTVFS gTwtPeds;
+extern tU32 DAT_006a0418;
+extern tPedestrian* PTR_00694120;
+extern int gPed_points[3];
+extern int gPed_score_multiplier;
+extern int gPed_recent_points;
 extern float gMutant_speed;
+extern tMovement_spec gPed_spurt_initial_speed;
+extern tSmashable_initial_position_spec gPed_spurt_initial_position;
 extern int gDancing_peds;
 extern int gDrunk_pedestrians;
 extern int gPeds_already_munged;
 extern int gPed_cache_sizes_1[4];
 extern tPed_face_cache_0x34* gPed_face_cache_heads[4];
 extern int gPed_cache_notify_flags;
+extern int gCount_race_pedestrian_specs;
+extern tPed_group_spec* gPed_groups;
+extern int gPed_groups_count;
+extern tPed_movement_spec* gPed_movements;
+extern int gPed_movements_count;
+extern tRace_ped_spec* gRace_pedestrian_specs;
 
-// OrientationChanged
+extern int C2_HOOK_FASTCALL OrientationChanged(const br_matrix34* pOrientation_1, const br_matrix34* pOrientation_2, float pCos_angle);
 
 // AssertRootObjectsMatrix
 
@@ -71,7 +87,7 @@ extern void C2_HOOK_CDECL SetCharacterPhysicsLevelAR(tPed_character_instance* pC
 
 // PedApplyPedPhysics
 
-// PedApplyPedPos
+extern void C2_HOOK_FASTCALL PedApplyPedPos(tPedestrian* pPedestrian, br_vector3* pPos);
 
 extern void C2_HOOK_FASTCALL PedApplyVanishDismembered(tPedestrian* pPedestrian, tU32 pValue);
 
@@ -89,7 +105,7 @@ extern void C2_HOOK_FASTCALL PedApplyVanishDismembered(tPedestrian* pPedestrian,
 
 extern void C2_HOOK_FASTCALL PedUndoDismember(tPedestrian* pPed, int pBone_index, tS8 pValue);
 
-// ReadPedSpecs
+extern void C2_HOOK_FASTCALL ReadPedSpecs(FILE* pF);
 
 extern br_vector3* C2_HOOK_FASTCALL GetPedPos(tPedestrian* pPed);
 
@@ -177,23 +193,23 @@ extern void C2_HOOK_FASTCALL CBFillInObject(tPhysics_object* pObject, undefined4
 
 // DoGiblets
 
-// DoBloodSpurt
+extern void C2_HOOK_FASTCALL DoBloodSpurt(tU32 pId, tU32 pTime, unsigned int pSeed, br_vector3* pPosition, br_vector3* pImpactee_velocity, br_vector3* pNormal);
 
 // DoSpurt
 
-// PedApplyBloodSpurt
+extern void C2_HOOK_FASTCALL PedApplyBloodSpurt(tU32 pId, tU32 pTime, unsigned int pSeed, br_vector3* pPosition, br_vector3* pImpactee_velocity, br_vector3* pNormal);
 
 // PedUndoBloodSpurt
 
 // OneLessPed
 
-// ScoreForKilledPedestrian
+extern void C2_HOOK_FASTCALL ScoreForKilledPedestrian(tPedestrian* pPed, float pHeight);
 
 // KillPedestrian
 
 // DismemberPed
 
-// DamagePedestrian
+extern void C2_HOOK_FASTCALL DamagePedestrian(tPedestrian* pPed, int pDamage, int pArg3, int pArg4, tPhysics_object* pObject);
 
 // SetLastHitter
 
@@ -253,7 +269,7 @@ extern int C2_HOOK_FASTCALL CBActiveHalted(tPed_character_instance* pCharacter, 
 
 extern int C2_HOOK_FASTCALL GetPedCount(void);
 
-// GetPedPosition
+extern int C2_HOOK_FASTCALL GetPedPosition(int pIndex, br_vector3* pPos);
 
 extern void C2_HOOK_CDECL TurnLimbsOnAndOff(br_actor* pActor, br_model* pModel, br_material* pMaterial, void* pOrder_table, br_uint_8 pStyle, int pOn_screen);
 
@@ -267,7 +283,7 @@ extern void C2_HOOK_CDECL TurnLimbsOnAndOff(br_actor* pActor, br_model* pModel, 
 
 // SpawnPedsOnFace
 
-// FinishUpLoadingPeds
+extern void C2_HOOK_FASTCALL FinishUpLoadingPeds(void);
 
 extern void C2_HOOK_FASTCALL MakeFlagWavingBastardWaveHisFlagWhichIsTheProbablyTheLastThingHeWillEverDo(void);
 
@@ -335,7 +351,9 @@ extern void C2_HOOK_FASTCALL ResetPedNearness(void);
 
 extern void C2_HOOK_FASTCALL GetPedestrianDebugInfo(char* pBuffer, int pPed_index);
 
-// PedPreCollisionStuff
+extern void C2_HOOK_FASTCALL ShowActivePedCount(void);
+
+extern void C2_HOOK_FASTCALL PedPreCollisionStuff(void);
 
 // UpdateIfBackwardsAR
 
@@ -357,7 +375,7 @@ extern void C2_HOOK_FASTCALL ModelUpdatePrimitiveMaterials(br_model* pModel);
 
 // UpdateModels
 
-// TurnOnGhostPeds
+extern void C2_HOOK_FASTCALL TurnOnGhostPeds(void);
 
 // TurnOffGhostPeds
 
@@ -371,7 +389,7 @@ extern void C2_HOOK_FASTCALL ComparePedStuff(void);
 
 extern void C2_HOOK_FASTCALL AdjustPedDiagnostics(tU32 pSubject_index, void* pUnused2, void* pUnused3, void* pUnused4);
 
-// CalmDownAllPeds
+extern int C2_HOOK_FASTCALL CalmDownAllPeds(void);
 
 extern void C2_HOOK_FASTCALL SetDefaultPedFolderNames(void);
 
@@ -437,7 +455,7 @@ extern void C2_HOOK_FASTCALL DisposeAllLoadedRemaps(void);
 
 // SetUpCharacterForm
 
-// DisposeCharacterForm
+extern void C2_HOOK_FASTCALL DisposeCharacterForm(tPed_form* pForm);
 
 // DisposeAllLoadedForms
 
@@ -489,7 +507,7 @@ extern int C2_HOOK_FASTCALL MakeCharacterCollideworthy2(tPed_character_instance*
 
 extern int C2_HOOK_FASTCALL MakeCharacterCollideworthy(tPed_character_instance* pCharacter, int pArg2, int pArg3);
 
-// GetRootObject
+extern tPhysics_object* C2_HOOK_FASTCALL GetRootObject(tPed_character_instance* pPed);
 
 // CharacterNoLongerCollideworthy
 
@@ -505,9 +523,9 @@ extern void C2_HOOK_FASTCALL SetObjectV(tPhysics_object* pObject, const br_vecto
 
 extern void C2_HOOK_FASTCALL RecalculateOrientationOfRoot(tPed_character_instance* pCharacter);
 
-// BonerActiveHalted2
+extern int C2_HOOK_FASTCALL BonerActiveHalted2(tPed_character_instance* pCharacter, undefined4 pArg2);
 
-// CharacterNoLongerPhysicworthy
+extern int C2_HOOK_FASTCALL CharacterNoLongerPhysicworthy(tPed_character_instance* pCharacter);
 
 // SetCharacterPhysicsLevel
 
@@ -549,7 +567,7 @@ extern int C2_HOOK_FASTCALL GetCharacterModelSet(tPed_character_instance* pChara
 
 // BonerPassiveCollision
 
-// BonerActiveHalted
+extern int C2_HOOK_FASTCALL BonerActiveHalted(tPed_character_instance* pCharacter);
 
 // BonerPedMovedByPhysics
 

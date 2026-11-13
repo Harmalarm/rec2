@@ -115,6 +115,11 @@ typedef void C2_HOOK_FASTCALL tZappy_AR_callback(void);
 typedef void C2_HOOK_FASTCALL tPreprocess_AR_callback(int pFrame_period);
 typedef void C2_HOOK_FASTCALL tPostProcess_AR_callback(int pFrame_period);
 
+typedef union {
+    float f;
+    tU32 u32;
+} tFloat_u32_union;
+
 typedef enum {
     eFPR_OK = 0,
     eFPR_end_of_path = 1,
@@ -264,7 +269,9 @@ typedef struct tPedestrian {
     tRace_ped_exclusion_spec* exclusion_spec;
     br_vector3 pos;
     tU32 field_0x28;
-    undefined field_0x2c[0x4c - 0x2c];
+    undefined field_0x2c[0x30 - 0x2c];
+    tU32 field_0x30;
+    undefined field_0x34[0x4c - 0x34];
     float speed_factor;
     tPedestrian* next;
 } tPedestrian;
@@ -403,6 +410,11 @@ typedef struct {
 } tPipe_ped_dir_data;
 
 typedef struct {
+    float old_speed;
+    float new_speed;
+} tPipe_ped_fp_change_data;
+
+typedef struct {
     tU16 render;
 } tPipe_drone_render;
 
@@ -466,7 +478,7 @@ typedef struct {
 
 typedef struct {
     tU8 type_from;
-    tS8 type_to;
+    tU8 type_to;
 } tPipe_single_transform_type;
 
 typedef struct {
@@ -654,6 +666,17 @@ typedef struct {
     tExplosion explosion;
 } tPipe_chunk_explosion;
 
+typedef struct {
+    br_matrix34 mat;
+    br_scalar size_min;
+    br_scalar size_max;
+    tU32 spill_time;
+    tU32 previous_stop_time;
+    tCar_spec* car;
+    br_vector3 original_pos;
+    br_pixelmap* pixelmap;
+} tPipe_chunk_oil_spill;
+
 typedef enum {
     ePipe_chunk_frame_finish = 0,
     ePipe_chunk_ped_incident = 1,
@@ -667,8 +690,10 @@ typedef enum {
     ePipe_chunk_screen_wobble = 12,
     ePipe_chunk_non_car = 14,
     ePipe_chunk_smoke = 15,
+    ePipe_chunk_oil_spill = 16,
     ePipe_chunk_smoke_column = 17,
     ePipe_chunk_smudge = 19,
+    ePipe_chunk_splash = 20,
     ePipe_chunk_prox_ray = 21,
     ePipe_chunk_skid_adjustment = 22,
     ePipe_chunk_flap = 23,
@@ -685,6 +710,7 @@ typedef enum {
     ePipe_chunk_ped_move = 42,
     ePipe_chunk_ped_physics = 43,
     ePipe_chunk_single_ped_dismember = 44,
+    ePipe_chunk_single_ped_fp_change = 45,
     ePipe_chunk_single_ped_pos = 46,
     ePipe_chunk_single_ped_model_change = 47,
     ePipe_chunk_phil_object = 48,
@@ -695,6 +721,7 @@ typedef enum {
     ePipe_chunk_ds_model = 56,
     ePipe_ped_diagnostic = 57,
     ePipe_chunk_vector3 = 58,
+    ePipe_extended_splash = 59,
     ePipe_chunk_drone_render = 60,
     ePipe_chunk_drone_corner_pos = 61,
     ePipe_chunk_single_drone_straight_pos = 62,
@@ -723,6 +750,7 @@ typedef struct tPipe_chunk {
         tPipe_chunk_frame_boundary frame_boundary;
         tPipe_chunk_non_car non_car;
         tPipe_ped_physics_data ped_physics;
+        tPipe_single_ped_pos ped_pos;
         tPipe_single_ped_dismember ped_dismember;
         tPipe_phil_object phil_object;
         tPipe_funk_enable funk_enable;
@@ -742,13 +770,16 @@ typedef struct tPipe_chunk {
         tPipe_model_mash model_mash;
         tPipe_chunk_bend bend;
         tPipe_chunk_screen_wobble wobble;
+        tPipe_chunk_skid_adjustment skid_adjustment;
         tPipe_chunk_smoke_column smoke_column;
         tPipe_chunk_explosion explosion;
         tPipe_single_groove_on_of groove;
         tPipe_single_vanished_dismembered vanished_dismembered;
         tPipe_chunk_napalm_bolt napalm_bolt;
         tPipe_ped_dir_data ped_dir;
+        tPipe_ped_fp_change_data ped_fp_change;
         tPipe_chunk_repulse_ray repulse_ray;
+        tPipe_chunk_oil_spill oil_spill;
         char raw_data[0];
     } data;
 } tPipe_chunk;
@@ -2536,7 +2567,7 @@ typedef enum tDriver {
     eDriver_detached_bit = 2,
     eDriver_split_car = 3,
     eDriver_4 = 4,
-    eDriver_5 = 5,
+    eDriver_5 = 5, /* eDriver_non_car? */
     eDriver_oppo = 6,
     eDriver_net_human = 7,
     eDriver_local_human = 8
@@ -2817,8 +2848,9 @@ typedef struct tCar_spec {
     br_vector3 pre_car_col_velocity;
     br_vector3 pre_car_col_velocity_car_space;
     br_vector3 vel;
-    undefined field_0x13cc[8];
-    float field_0x13e0;
+    float last_col_prop_x;
+    float last_col_prop_y;
+    float last_col_prop_z;
     int time_last_hit;
     int time_last_victim;
     tCar_spec* last_hit_by;
@@ -2852,7 +2884,7 @@ typedef struct tCar_spec {
     br_vector3 nor[4];
     br_vector3 prev_nor[4];
     float oil_remaining[4];
-    float maybe_blood_remaining[4];
+    float oil_wheel_friction[4];
     float total_length[4];
     br_material* field_0x16fc[4];
     float proxy_ray_distance;
@@ -3719,7 +3751,7 @@ typedef struct {
     float field_0x44;
     float field_0x48;
     float field_0x4c;
-    undefined4 field_0x50;
+    br_material* field_0x50;
 } tOil_spill_info;
 
 typedef struct {
@@ -4451,7 +4483,7 @@ typedef struct tPhysics_object {
     int field_0x1a0;
     undefined4 field_0x1a4;
     br_vector3 velocity_car_space;
-    undefined field_0x1b4[12];
+    br_vector3 field_0x1b4;
     br_vector3 rotate_omega;
     undefined field_0x1cc[12];
     undefined4 field183_0x1d8;
@@ -4483,7 +4515,9 @@ typedef struct tPhysics_object {
     undefined field_0x261;
     undefined field_0x262[6];
     tU32 message_time; // 0x268
-    undefined field_0x26c[560];
+    undefined field_0x26c[0x278 - 0x26c];
+    tS16 field_0x278;
+    undefined field_0x27a[0x49c - 0x27a];
     undefined4 field_0x49c; /* tU32 last_car_car_collision: */
     undefined field_0x4a0[52];
     tU8 drivable_on;
@@ -4761,16 +4795,21 @@ typedef struct tNon_car_spec {
     undefined field_0x4[4];
     tPhysics_object* collision_info;
     tDriver driver;
-    br_actor* actor;
+    br_actor* car_master_actor;
     undefined field_0x14[4];
     br_scalar break_off_radians_squared;
-    undefined field_0x1c[80];
+    undefined field_0x1c[0x4c - 0x1c];
+    br_vector3 pos;
+    br_vector3 centre_of_mass_world_scale;
+    undefined field_0x64[0x6c - 0x64];
     int count_shrapnel_materials;
     undefined field_0x70[16];
     tS16 car_ID;
     undefined field_0x82[2];
     br_material* shrapnel_materials[3];
-    undefined field_0x90[60];
+    undefined field_0x90[0xc4 - 0x90];
+    float field_0xc4;
+    undefined field_0xc8[0xcc - 0xc8];
     float free_mass;
     float attached_mass;
     float min_torque_squared;
@@ -4780,7 +4819,7 @@ typedef struct tNon_car_spec {
     br_vector3 I_over_M;
     tPhysics_joint* field_0xf0;
     tJoint_translation_params* translation_parameters;
-    tU8 field_0xf8[4];
+    tU32 field_0xf8;
     tU8 field_0xfc;
     tU8 number_of_pushes;
     tU32 flags;
@@ -5226,10 +5265,13 @@ typedef enum {
     eNet_message_chunk_type_5 = 0x5,
     eNet_message_chunk_poll_car_details = 0x6,
     eNet_message_chunk_type_start_race = 0xc,
+    eNet_message_chunk_type_headup = 0xd,
     eNet_message_chunk_type_netsynch = 0xe,
+    eNet_message_chunk_type_player_scores = 0x18,
     eNet_message_chunk_type_gameplay = 0x1b,
     eNet_message_chunk_type_oil_spill = 0x1f,
     eNet_message_chunk_type_car_crush = 0x20,
+    eNet_message_chunk_type_semi_detach_bit = 0x24,
     eNet_message_chunk_type_reattach_bit = 0x26,
     eNet_message_chunk_type_reattach_all_bits = 0x2b,
     eNet_message_chunk_type_toggle_doors = 0x2c,
@@ -5282,6 +5324,19 @@ typedef struct {
 } tNet_message_car_crush;
 
 typedef struct {
+    tNet_message_chunk_header header;
+    tPlayer_ID player;
+    tU8 id;
+    tU32 time;
+    tCompressed_vector3 point_1;
+    tCompressed_vector3 point_2;
+    tCompressed_vector3 point_3;
+    tCompressed_vector3 bounds_min;
+    tCompressed_vector3 bounds_max;
+    tU16 value;
+} tNet_message_chunk_semi_detach_bit;
+
+typedef struct {
     int ID;
     tU8 field_0x4;
     undefined field_0x5[0x8 - 0x5];
@@ -5324,6 +5379,11 @@ typedef struct {
 
 typedef struct {
     tNet_message_chunk_header header;
+    char text[0x80];
+} tNet_message_headup;
+
+typedef struct {
+    tNet_message_chunk_header header;
     tU8 data[];
 } tNet_message_chunk_raw;
 
@@ -5336,8 +5396,8 @@ typedef struct {
 
 typedef struct tWorld_callbacks {
     int (C2_HOOK_FASTCALL * process_forces)(void*, float*, int arg3);
-    int (C2_HOOK_FASTCALL * process_joint_forces)(undefined4, undefined4, undefined4);
-    void (C2_HOOK_FASTCALL * new_face_list)(tPhysics_object*, undefined4 *);
+    int (C2_HOOK_FASTCALL * process_joint_forces)(void*, void*, void*);
+    void (C2_HOOK_FASTCALL * new_face_list)(tPhysics_object*, tFace_ref *);
     int (C2_HOOK_FASTCALL * find_faces_in_box)(tBounds*, tFace_ref*, int, struct tWorld_callbacks*);
     tNon_car_spec* (C2_HOOK_FASTCALL * pull_actor_from_world)(br_actor*);
     void (C2_HOOK_FASTCALL * stop_groovidelic)(br_actor*);
@@ -5416,10 +5476,12 @@ typedef struct {
 typedef union {
     tNet_message_chunk_raw raw;
     tNet_message_chunk_start_race start_race; /* type = 0xc */
+    tNet_message_headup headup; /* type = 0xd */
     tNet_message_chunk_scores scores; /* type = 0x18 */
     tNet_message_chunk_gameplay gameplay; /* type = 0x1b */
     tNet_message_chunk_oil_spill oil_spill; /* type = 0x1f*/
     tNet_message_car_crush car_crush; /* type = 0x20 */
+    tNet_message_chunk_semi_detach_bit semi_detach_bit; /* type = 0x24 */
     tNet_message_chunk_reattach_bit reattach_bit; /* type = 0x26 */
     tNet_message_chunk_reattach_all_bits reattach_all_bits; /* type = 0x2b */
     tNet_message_chunk_toggle_doors toggle_doors; /* type = 0x2c */
@@ -5543,6 +5605,9 @@ enum {
     eMiscString_engine_power_increased = 176,
     eMiscString_increased_offsensive = 177,
     eMiscString_cannot_afford_it_credits_S = 179,
+    eMiscString_is_undead = 185,
+    eMiscString_is_the_fox = 187,
+    eMiscString_you_re_the_fox = 188,
     eMiscString_driven_to_destruction_description = 194,
     eMiscString_car_crusher_description = 195,
     eMiscString_smashy_things_description = 196,
@@ -5764,6 +5829,7 @@ enum {
     kFatalError_CouldNotOpenFlicFile_S = 0x0d,
     kFatalError_FlicFileWasNot8BitsDeep_S = 0x0f,
     kFatalError_CouldNotAscertainFrameRateForFlicFile = 0x10,
+    kFatalError_CouldNotFindASpareTransientBitmap = 0x12,
     kFatalError_CannotLoadFontImage_S = 0x14,
     kFatalError_CannotLoadFontWidthTable_S = 0x15,
     kFatalError_CannotLoadCursorImage = 0x16,
@@ -5804,6 +5870,7 @@ enum {
     kFatalError_CantOpenKeyNamesFile = 0x61,
     kFatalError_CantOpen_S = 0x6b,
     kFatalError_CannotLoadAGeneratedShadeTable = 0x6d,
+    kFatalError_NetworkCodeSelfCheck = 0x6e,
     kFatalError_RanOutOfFunkGrooveSlotBunches = 0x71,
     kFatalError_FileIsCorrupted_S = 0x73,
     kFatalError_CantFindFile_S = 0x75,

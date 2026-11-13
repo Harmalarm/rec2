@@ -19,6 +19,7 @@ extern int INT_00659d34;
 extern int rr_min;
 extern int rr_mid;
 extern int rr_max;
+extern int gInitialised_grid;
 
 extern int C2_HOOK_FASTCALL NetInitialise(void);
 
@@ -38,7 +39,7 @@ extern void C2_HOOK_FASTCALL HaltNetServiceReentrancy(void);
 
 // NetSendHeadupToEverybody
 
-// NetSendHeadupToPlayer
+extern void C2_HOOK_FASTCALL NetSendHeadupToPlayer(char* pMessage, tPlayer_ID pPlayer);
 
 // InitialisePlayerStati
 
@@ -126,7 +127,7 @@ extern void C2_HOOK_FASTCALL DisposeExcessMemory(void);
 
 extern int C2_HOOK_FASTCALL NetDisposeMessage(tNet_game_details* pDetails, tNet_message* pMessage);
 
-// NetReallyDisposeMessage
+extern void C2_HOOK_FASTCALL NetReallyDisposeMessage(tNet_message* pMessage);
 
 // NetGetNextMessage
 

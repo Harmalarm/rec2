@@ -11,10 +11,12 @@
 #include "00-car.h"
 #include "01-network.h"
 #include "13-crush1.h"
+#include "15-displays.h"
 
 #include "16-graphics1.h"
 #include "18-graphics2.h"
 #include "32-spark.h"
+#include "39-oil.h"
 #include "41-utility.h"
 #include "42-input.h"
 #include "43-pratcam.h"
@@ -39,17 +41,25 @@ int gInventory[20];
 // GLOBAL: CARMA2_SW 0x0069aac4
 int gINT_006a0a6c;
 
-// GLOBAL: CARMA2_HW 0x006a0a5c
-// GLOBAL: CARMA2_SW 0x0069aab4
-int gINT_006a0a5c;
+// GLOBAL: CARMA2_HW 0x006a0960
+// GLOBAL: CARMA2_SW 0x0069a9b8
+tRepulse_link gRepulse_links[6] = { 0 };
+
+// GLOBAL: CARMA2_HW 0x006a0a50
+// GLOBAL: CARMA2_SW 0x0069aaa8
+tU8* gRace_powerup_respawn_bools = NULL;
+
+// GLOBAL: CARMA2_HW 0x006a0a54
+// GLOBAL: CARMA2_SW 0x0069aaac
+tPowerup* gPowerup_array = NULL;
 
 // GLOBAL: CARMA2_HW 0x006a0a58
 // GLOBAL: CARMA2_SW 0x0069aab0
 int gInventory_selected = 0;
 
-// GLOBAL: CARMA2_HW 0x006a0960
-// GLOBAL: CARMA2_SW 0x0069a9b8
-tRepulse_link gRepulse_links[6];
+// GLOBAL: CARMA2_HW 0x006a0a5c
+// GLOBAL: CARMA2_SW 0x0069aab4
+int gINT_006a0a5c = 0;
 
 // GLOBAL: CARMA2_HW 0x006a0ad4
 // GLOBAL: CARMA2_SW 0x0069ab2c
@@ -58,6 +68,10 @@ const char* gPowerup_txt_path;
 // GLOBAL: CARMA2_HW 0x006a0ad8
 // GLOBAL: CARMA2_SW 0x0069ab30
 tU32* gReal_render_palette;
+
+// GLOBAL: CARMA2_HW 0x006a0adc
+// GLOBAL: CARMA2_SW 0x0069ab34
+int gCollision_info_uid_counter;
 
 // GLOBAL: CARMA2_HW 0x006a0ae0
 // GLOBAL: CARMA2_SW 0x0069ab38
@@ -111,6 +125,7 @@ int gBlind_pedestrians;
 float gPed_gravity_multiplier;
 
 // GLOBAL: CARMA2_HW 0x007447e4
+// GLOBAL: CARMA2_SW 0x0073b2a4
 int gPed_dismemberfest;
 
 // GLOBAL: CARMA2_HW 0x007447f8
@@ -121,9 +136,13 @@ int gPanicking_peds;
 // GLOBAL: CARMA2_SW 0x006fc480
 int gCount_mutant_tail_parts;
 
+// GLOBAL: CARMA2_HW 0x006a0458
+// GLOBAL: CARMA2_SW 0x0069a4b0
+tRespawn_powerup gRespawn_powerups[100] = { 0 };
+
 // GLOBAL: CARMA2_HW 0x006a0908
 // GLOBAL: CARMA2_SW 0x0069a960
-tPhysics_object* gMutant_tail_object;
+tPhysics_object* gMutant_tail_object = NULL;
 
 // GLOBAL: CARMA2_HW 0x006a0acc
 // GLOBAL: CARMA2_SW 0x0069ab24
@@ -169,6 +188,10 @@ int gInstant_handbrake;
 // GLOBAL: CARMA2_SW 0x0069aaac
 tPowerup* gPowerup_array;
 
+// GLOBAL: CARMA2_HW 0x006a0a50
+// GLOBAL: CARMA2_SW 0x0069aaa8
+tU8* gRace_powerup_respawn_bools;
+
 // FUNCTION: CARMA2_HW 0x004d8d10
 // FUNCTION: CARMA2_SW 0x004d5240
 char* C2_HOOK_FASTCALL GetPowerupMessage(int pPowerup_index) {
@@ -196,7 +219,19 @@ char* C2_HOOK_FASTCALL GetPowerupMessage(int pPowerup_index) {
 
 // ExcludedPowerup
 
-// GotPowerupX
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
+// STUB: CARMA2_HW 0x004d9150
+// STUB: CARMA2_SW 0x004d5680
+int C2_HOOK_FASTCALL GotPowerupX(tCar_spec* pCar, int pIndex, int pArg3, int pMessage, tU32 pTime) {
+    NOT_IMPLEMENTED();
+}
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // GotPowerupXX
 
@@ -235,11 +270,76 @@ void C2_HOOK_FASTCALL LoadPowerups(void) {
 
 // MungeBoxObject
 
-// MungeShereObject
+// FUNCTION: CARMA2_HW 0x004da400
+// FUNCTION: CARMA2_SW 0x004d68d0
+tPhysics_object* C2_HOOK_FASTCALL MungeShereObject(br_model* pModel, float pWeight) {
+    tPhysics_object* collision_info;
+    tPhysics_shape* shape;
+
+    C2_HOOK_BUG_ON(sizeof(tPhysics_object) != 0x4d8);
+
+    collision_info = BrMemAllocate(sizeof(tPhysics_object), kMem_collision_object);
+    collision_info->shape = (tPhysics_shape*)AllocateShapeSphere(kMem_collision_shape);
+    BrVector3Set(&collision_info->shape->sphere.sphere.center, 0.0f, 0.0f, 0.0f);
+    collision_info->shape->sphere.sphere.radius = (pModel->bounds.max.v[0] - pModel->bounds.min.v[0]
+        + pModel->bounds.max.v[1] - pModel->bounds.min.v[1]
+        + pModel->bounds.max.v[2] - pModel->bounds.min.v[2]) / 6.0f;
+    FillInShape(collision_info->shape);
+    collision_info->uid = (tU8)gCollision_info_uid_counter;
+    gCollision_info_uid_counter++;
+    UpdateCollisionObject(collision_info);
+    shape = collision_info->shape;
+    collision_info->M = pWeight;
+    BrVector3Set(&collision_info->I,
+        REC2_SQR(shape->sphere.sphere.radius) * pWeight / 6.0f,
+        REC2_SQR(shape->sphere.sphere.radius) * pWeight / 6.0f,
+        REC2_SQR(shape->sphere.sphere.radius) * pWeight / 6.0f);
+    BrVector3SetFloat(&collision_info->field_0x54, 0.0f, (br_scalar)(-1.0 / (2.5 * 6.9)), 0.0f);
+    collision_info->actor = BrActorAllocate(BR_ACTOR_MODEL, NULL);
+    BrMatrix34Copy(&collision_info->actor->t.t.mat, &collision_info->transform_matrix);
+    collision_info->actor->model = pModel;
+    collision_info->box_face_ref = (tU16)(gFace_num__car - 2);
+    return collision_info;
+}
 
 // InitTail
 
-// ThisObjectHitAMineSoSpamItUpUsingThisPowerupsSettings
+// FUNCTION: CARMA2_HW 0x004d9d00
+// FUNCTION: CARMA2_SW 0x004d61d0
+void C2_HOOK_FASTCALL ThisObjectHitAMineSoSpamItUpUsingThisPowerupsSettings(tPhysics_object* pObject, int pPowerup_index) {
+    tPedestrian* ped;
+    int old_dismemberfest;
+
+    if (pObject->field_0x1a0 & 0xf0000) {
+        if (IsItReallyOKThatWeDontMakeAnyEffortToProtectAnySadFuckersOutThereThatDontWishToSeeInnocentPeopleBlownToBitsByHighExplosiveMinesAndShells()) {
+            ped = ((tPed_character_instance*)pObject->owner)->ped;
+            if (!(ped->character->field_0x14 & 0x4) && !gPHIL_doing_physics) {
+                SetThisPedPhysicing(ped);
+            }
+            if (pPowerup_index != 14) {
+                BrVector3Set(&pObject->v, 0.0f, 0.0f, 0.0f);
+            }
+            pObject->v.v[1] = (br_scalar)(pObject->v.v[1] + FRandomBetween(0.7f, 1.0f) / (pObject->M * WORLD_SCALE_D));
+            pObject->omega.v[2] = (br_scalar)(pObject->omega.v[2] + (FRandomPosNeg(0.5f) * TAU) / pObject->M);
+            pObject->omega.v[0] = (br_scalar)(pObject->omega.v[0] + (FRandomPosNeg(0.5f) * TAU) / pObject->M);
+            pObject->disable_move_rotate = 0;
+            old_dismemberfest = gPed_dismemberfest;
+            gPed_dismemberfest = 1;
+            DamagePedestrian(((tPed_character_instance*)pObject->owner)->ped, 500, 0x61, 0x61, gProgram_state.current_car.collision_info);
+            gPed_dismemberfest = old_dismemberfest;
+        }
+    } else if (pObject != NULL && pObject->flags_0x238 == 0x10) {
+        pObject->v.v[1] = (br_scalar)(pObject->v.v[1] + FRandomBetween(3.0f, 4.0f) / (pObject->M * WORLD_SCALE_D));
+        pObject->omega.v[2] = (br_scalar)(pObject->omega.v[2] + (FRandomPosNeg(1.75f) * TAU) / pObject->M);
+        pObject->omega.v[0] = (br_scalar)(pObject->omega.v[0] + (FRandomPosNeg(1.75f) * TAU) / pObject->M);
+        pObject->disable_move_rotate = 0;
+    } else {
+        pObject->v.v[1] = (br_scalar)(pObject->v.v[1] + FRandomBetween(1.0f, 2.0f) / (pObject->M * WORLD_SCALE_D));
+        pObject->omega.v[2] = (br_scalar)(pObject->omega.v[2] + (FRandomPosNeg(0.5f) * TAU) / pObject->M);
+        pObject->omega.v[0] = (br_scalar)(pObject->omega.v[0] + (FRandomPosNeg(0.5f) * TAU) / pObject->M);
+        pObject->disable_move_rotate = 0;
+    }
+}
 
 // InitMineShit
 
@@ -408,7 +508,20 @@ void C2_HOOK_FASTCALL GotPowerup9(void) {
     GotPowerupN(9);
 }
 
-// GotCredits
+// FUNCTION: CARMA2_HW 0x004dc170
+// FUNCTION: CARMA2_SW 0x004d8670
+int C2_HOOK_FASTCALL GotCredits(tPowerup* pPowerup, tCar_spec* pCar) {
+    int credits;
+    char s[256];
+
+    if (pCar != NULL && pCar->driver == eDriver_local_human) {
+        credits = 100 * (IRandomBetween(pPowerup->integer_params[0], pPowerup->integer_params[1]) / 100);
+        strcpy(s, pPowerup->message);
+        strcat(s, " ");
+        EarnCredits2(credits, s);
+    }
+    return pPowerup - gPowerup_array;
+}
 
 // GainAPO2
 
@@ -416,7 +529,20 @@ void C2_HOOK_FASTCALL GotPowerup9(void) {
 
 // GainAPO
 
-// GotTimeOrPower
+// FUNCTION: CARMA2_HW 0x004dc470
+// FUNCTION: CARMA2_SW 0x004d8970
+int C2_HOOK_FASTCALL GotTimeOrPower(tPowerup* pPowerup, tCar_spec* pCar) {
+    int time;
+
+    if (gNet_mode != eNet_mode_none) {
+        return GotPowerupX(pCar, gNet_powerup_time_replacement, 1, 1, 0);
+    }
+    if (pCar != NULL && pCar->driver == eDriver_local_human) {
+        time = IRandomBetween(pPowerup->integer_params[0], pPowerup->integer_params[1]);
+        AwardTime(time);
+    }
+    return pPowerup - gPowerup_array;
+}
 
 // GainAPOPotential
 
@@ -562,7 +688,31 @@ void C2_HOOK_FASTCALL ResetPedBrittle(tPowerup* pPowerup, tCar_spec* pCar) {
     gPed_dismemberfest = 0;
 }
 
-// SetEngineFactor
+// FUNCTION: CARMA2_HW 0x004dca30
+// FUNCTION: CARMA2_SW 0x004d8f30
+int C2_HOOK_FASTCALL SetEngineFactor(tPowerup* pPowerup, tCar_spec* pCar) {
+    float front_give;
+    float rear_give;
+    float damping;
+    float front_height;
+    float rear_height;
+
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tCar_spec, field_0x4d4, 0x4d4);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tCar_spec, grip_multiplier, 0x4d0);
+
+    if (pPowerup->initial_value > 0) {
+        PlayExclusiveFFBEffect("Afterburner", 1);
+    }
+    pCar->field_0x4d4 = pPowerup->float_params[0];
+    pCar->grip_multiplier = pPowerup->float_params[1];
+    front_give = pPowerup->float_params[2];
+    rear_give = pPowerup->float_params[3];
+    front_height = pPowerup->float_params[4];
+    rear_height = pPowerup->float_params[5];
+    damping = pPowerup->float_params[6];
+    SetCarSuspGiveAndHeight(pCar, front_give, rear_give, damping, front_height, rear_height);
+    return pPowerup - gPowerup_array;
+}
 
 // FUNCTION: CARMA2_HW 0x004dcab0
 // FUNCTION: CARMA2_SW 0x004d8fb0
@@ -749,7 +899,11 @@ int C2_HOOK_FASTCALL SetDamageMultiplier(tPowerup* pPowerup, tCar_spec* pCar) {
 
 // SendMines
 
-// MinePreCollisionStuff
+// STUB: CARMA2_HW 0x004dd1b0
+// STUB: CARMA2_SW 0x004d96b0
+void C2_HOOK_FASTCALL MinePreCollisionStuff(void) {
+    NOT_IMPLEMENTED();
+}
 
 // ActivateMine
 
@@ -796,7 +950,15 @@ void C2_HOOK_FASTCALL ARUndoShitMine(br_actor* pActor, br_matrix34* pMatrix) {
     pActor->render_style = BR_RSTYLE_NONE;
 }
 
-// PissOutOil
+// FUNCTION: CARMA2_HW 0x004de040
+// FUNCTION: CARMA2_SW 0x004da540
+int C2_HOOK_FASTCALL PissOutOil(tPowerup* pPowerup, tCar_spec* pCar) {
+    PlayExclusiveFFBEffect("Oil_Slick", 0);
+    QueueOilSpill2(NULL, pCar->car_master_actor, pCar->car_actor->model, 0,
+        0.35f, 0.6f, 0.00009f, 0.0003f, 0.2f, 1.5f, 2.5f, 0.01f, 0.15f,
+        oily_material, NULL);
+    return pPowerup - gPowerup_array;
+}
 
 // FUNCTION: CARMA2_HW 0x004de0c0
 // FUNCTION: CARMA2_SW 0x004da5c0
@@ -1007,7 +1169,13 @@ int C2_HOOK_FASTCALL SetPissedPeds(tPowerup* pPowerup, tCar_spec* pCar) {
     return pPowerup - gPowerup_array;
 }
 
-// SetGhostPeds
+// FUNCTION: CARMA2_HW 0x004de930
+// FUNCTION: CARMA2_SW 0x004dae30
+int C2_HOOK_FASTCALL SetGhostPeds(tPowerup* pPowerup, tCar_spec* pCar) {
+
+    TurnOnGhostPeds();
+    return pPowerup - gPowerup_array;
+}
 
 // FUNCTION: CARMA2_HW 0x004de960
 void C2_HOOK_FASTCALL ResetDancingPeds(tPowerup* pPowerup, tCar_spec* pCar) {
@@ -1248,7 +1416,18 @@ void C2_HOOK_FASTCALL SetSpinningPowerup(br_actor* pActor, int pOpacity) {
 
 // SetChangingPowerup
 
-// PedValium
+// FUNCTION: CARMA2_HW 0x004dfec0
+// FUNCTION: CARMA2_SW 0x004dc3c0
+int C2_HOOK_FASTCALL PedValium(tPowerup* pPowerup, tCar_spec* pCar) {
+
+    if (CalmDownAllPeds()) {
+        NewTextHeadupSlot(4, 0, 3000, -4, GetMiscString(eMiscString_pedestrians_are_calm_now));
+        DRS3StartSound2(gCar_outlet, eSoundId_PedValium, 1, 0xff, 0xff, -1, -1);
+        return pPowerup - gPowerup_array;
+    } else {
+        return -1;
+    }
+}
 
 // PowerupCancel
 
@@ -1299,7 +1478,25 @@ void C2_HOOK_FASTCALL UndoInitialTail(void) {
     }
 }
 
-// MayQueuePowerupRespawn
+// FUNCTION: CARMA2_HW 0x004e0750
+// FUNCTION: CARMA2_SW 0x004dcc50
+void C2_HOOK_FASTCALL MayQueuePowerupRespawn(int pPowerup_index, br_actor* pActor) {
+    int i;
+
+    C2_HOOK_BUG_ON(REC2_ASIZE(gRespawn_powerups) != 100);
+    C2_HOOK_BUG_ON(sizeof(tRespawn_powerup) != 0xc);
+
+    if (pActor != NULL && gRace_powerup_respawn_bools[pPowerup_index] && (gNet_mode == eNet_mode_none || gCurrent_net_game->options.powerup_respawn)) {
+        for (i = 0; i < (int)REC2_ASIZE(gRespawn_powerups); i++) {
+            if (gRespawn_powerups[i].actor == NULL) {
+                gRespawn_powerups[i].actor = pActor;
+                gRespawn_powerups[i].index = pPowerup_index;
+                gRespawn_powerups[i].respawn_time = GetTotalTime() + gPickup_respawn_max_extra_time_ms / 2 + gPickup_respawn_min_time_ms;
+                break;
+            }
+        }
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x004e07d0
 // FUNCTION: CARMA2_SW 0x004dccd0

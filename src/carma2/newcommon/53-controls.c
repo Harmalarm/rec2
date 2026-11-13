@@ -9,6 +9,9 @@
 #include "53-controls.h"
 
 #include "00-car.h"
+#include "01-network.h"
+#include "04-netgame.h"
+#include "07-structur.h"
 #include "15-displays.h"
 #include "16-graphics1.h"
 #include "17-world2.h"
@@ -22,11 +25,13 @@
 #include "42-input.h"
 #include "43-pratcam.h"
 #include "59-camera.h"
+#include "62-graphics3.h"
 #include "69-sound.h"
 #include "70-packfile.h"
 #include "globvars.h"
 #include "globvrkm.h"
 #include "globvrpb.h"
+#include "joystick.h"
 #include "platform.h"
 #include "rec2_macros.h"
 
@@ -79,9 +84,17 @@ int gHeadup_map_h;
 // GLOBAL: CARMA2_SW 0x00676b78
 char gString[84];
 
+// GLOBAL: CARMA2_HW 0x0067c498
+// GLOBAL: CARMA2_SW 0x00676c10
+int gInvulnerability;
+
 // GLOBAL: CARMA2_HW 0x0067c3c8
 // GLOBAL: CARMA2_SW 0x00676b40
-char* gAbuse_text[10];
+char* gAbuse_text[10] = { 0 };
+
+// GLOBAL: CARMA2_HW 0x0067c3f0
+// GLOBAL: CARMA2_SW 0x00676b68
+int gINT_0067c3f0 = 0;
 
 // GLOBAL: CARMA2_HW 0x0067c3f8
 // GLOBAL: CARMA2_SW 0x00676b70
@@ -95,9 +108,21 @@ int gAllow_car_flying;
 // GLOBAL: CARMA2_SW 0x00676bec
 int gEntering_message;
 
+// GLOBAL: CARMA2_HW 0x0067c47c
+// GLOBAL: CARMA2_SW 0x00676bf4
+tU32 gToo_poor_for_recovery_timeout;
+
+// GLOBAL: CARMA2_HW 0x0079efa4
+// GLOBAL: CARMA2_SW 0x00795544
+tCamera_key_flags gCamera_key_flags;
+
 // GLOBAL: CARMA2_HW 0x006b781c
 // GLOBAL: CARMA2_SW 0x006ae4fc
 tRace_over_reason gRace_over_reason;
+
+// GLOBAL: CARMA2_HW 0x0067c478
+// GLOBAL: CARMA2_SW 0x00676bf0
+tU32 gPalette_fade_time;
 
 void C2_HOOK_FASTCALL CompleteRace(void) {
     gRace_over_reason = eRace_over_0;
@@ -114,9 +139,32 @@ int C2_HOOK_FASTCALL AbortRace(tFrontend_spec* pFrontend) {
     return gRace_finished;
 }
 
-// F4Key
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
 
-// SetFlag
+// STUB: CARMA2_HW 0x004414b0
+// STUB: CARMA2_SW 0x00441590
+void C2_HOOK_FASTCALL F4Key(void) {
+    NOT_IMPLEMENTED();
+}
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
+
+// FUNCTION: CARMA2_HW 0x00441580
+// FUNCTION: CARMA2_SW 0x00441660
+void C2_HOOK_FASTCALL SetFlag(tU32 pFlag) {
+
+    if (gI_am_cheating == pFlag) {
+        gI_am_cheating = 0;
+        NewTextHeadupSlot(4, 0, 3000, -4, "Cheating Off");
+    } else {
+        gI_am_cheating = pFlag;
+    }
+    F4Key();
+}
 
 // FUNCTION: CARMA2_HW 0x004415c0
 // FUNCTION: CARMA2_SW 0x004416a0
@@ -316,7 +364,20 @@ void C2_HOOK_FASTCALL TDamageRRWheel(void) {
     DamageRRWheel(21);
 }
 
-// ToggleMiniMap
+// FUNCTION: CARMA2_HW 0x004420e0
+// FUNCTION: CARMA2_SW 0x004421c0
+void C2_HOOK_FASTCALL ToggleMiniMap(void) {
+
+    if (gMap_view != 2) {
+        gMini_map_visible = !gMini_map_visible;
+        if (!gMini_map_visible) {
+            NewTextHeadupSlot(4, 0, 500, -4, GetMiscString(eMiscString_minimap_off));
+        } else {
+            NewTextHeadupSlot(4, 0, 500, -4, GetMiscString(eMiscString_minimap_on));
+        }
+        MapChanged();
+    }
+}
 
 // CheckToggles
 
@@ -425,7 +486,17 @@ void C2_HOOK_FASTCALL CheckHorn3D(tCar_spec* pCar) {
 
 // SortOutRecover
 
-// SetFlipUpCar
+// FUNCTION: CARMA2_HW 0x00442970
+// FUNCTION: CARMA2_SW 0x00442a50
+void C2_HOOK_FASTCALL SetFlipUpCar(tCar_spec* pCar) {
+    if (gNet_mode == eNet_mode_none || pCar == NULL || pCar->driver != eDriver_local_human) {
+        FlipUpCar(pCar);
+    } else {
+        DisableCar(pCar);
+        gPalette_fade_time = GetRaceTime();
+        NetPlayerStatusChanged(ePlayer_status_recovering);
+    }
+}
 
 
 // FUNCTION: CARMA2_HW 0x00442e10
@@ -448,7 +519,19 @@ void C2_HOOK_FASTCALL AlignChildren(tPhysics_object* pCollision_info) {
     }
 }
 
-// FlipUpCar
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
+// STUB: CARMA2_HW 0x004429b0
+// STUB: CARMA2_SW 0x00442a90
+void C2_HOOK_FASTCALL FlipUpCar(tCar_spec* pCar_spec) {
+    NOT_IMPLEMENTED();
+}
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // FUNCTION: CARMA2_HW 0x00442e80
 // FUNCTION: CARMA2_SW 0x00442f60
@@ -459,15 +542,191 @@ void C2_HOOK_FASTCALL GetPowerup(int pNum) {
 
 // CheckSystemKeys
 
-// CheckForCheatingGits
+// FUNCTION: CARMA2_HW 0x00443c50
+// FUNCTION: CARMA2_SW 0x00443d30
+void C2_HOOK_FASTCALL CheckForCheatingGits(void) {
+    tU32* keys;
+
+    keys = KevKeyService();
+    if (keys[0] == 0x616fb8e4 && keys[1] == 0x7c6100a8) {
+        ToggleSoundEnable();
+        gProgram_state.game_completed = 1;
+        DRS3StartSound(gEffects_outlet, eSoundId_FlaskGone);
+    }
+}
 
 // CheckKevKeys
 
-// BrakeInstantly
+inline void C2_HOOK_FASTCALL BrakeInstantly(void) {
+    int i;
+    br_scalar speed_squared;
 
-// PollCarControls
+    gProgram_state.current_car.revs = 0.f;
+    speed_squared = BrVector3Dot(&gProgram_state.current_car.collision_info->v, &gProgram_state.current_car.collision_info->v);
+    if (gProgram_state.current_car.number_of_wheels_on_ground != 0 && speed_squared > .0001f) {
+        PratcamEvent(41);
+        for (i = 0; i < 5; i++) {
+            DRS3StartSound(gCar_outlet, eSoundId_TyreScreeching + i);
+        }
+    }
+    if (speed_squared > .1f) {
+        PDPlayFFBEffect("Instant_Handbrake");
+    }
+    BrVector3Set(&gProgram_state.current_car.collision_info->v, 0.f, 0.f, 0.f);
+}
 
-// PollCameraControls
+// FUNCTION: CARMA2_HW 0x00443e80
+// FUNCTION: CARMA2_SW 0x00443f60
+void C2_HOOK_FASTCALL PollCarControls(tU32 pTime_difference) {
+    tCar_controls keys = { 0 };
+    tJoystick joystick;
+    tCar_spec* c;
+
+    c = &gProgram_state.current_car;
+    joystick.left = -1;
+    joystick.right = -1;
+    joystick.acc = -1;
+    joystick.dec = -1;
+    CheckKeysForMouldiness();
+    if (gEntering_message) {
+        c->keys = keys;
+        c->joystick = joystick;
+    } else {
+
+        if (gKey_mapping[47] < 143 && gKey_mapping[48] < 143) {
+            if (KeyIsDownNoMouldiness(47)) {
+                keys.left = 1;
+            }
+            if (KeyIsDownNoMouldiness(48)) {
+                keys.right = 1;
+            }
+        }
+        if (!(keys.left || keys.right)) {
+            if (PDIsJoystickDPadEnabled()) {
+                if (gJoy_array[0] > 10) {
+                    keys.left = 1;
+                }
+                if (gJoy_array[1] > 10) {
+                    keys.right = 1;
+                }
+            } else {
+                joystick.left = gJoy_array[0];
+                joystick.right = gJoy_array[1];
+                if (joystick.left < 0 && joystick.right < 0) {
+                    joystick.left = 0;
+                }
+            }
+        }
+        if (KeyIsDownNoMouldiness(13)) {
+            keys.holdw = 1;
+        }
+        if (KeyIsDownNoMouldiness(54) || gRace_finished) {
+            if (gInstant_handbrake && !gRace_finished) {
+                BrakeInstantly();
+            } else {
+                keys.brake = 1;
+            }
+        }
+        if (KeyIsDownNoMouldiness(49) && !gRace_finished && !c->knackered && !gWait_for_it) {
+            keys.acc = 1;
+        }
+        if (!keys.acc) {
+            if (PDIsJoystickDPadEnabled()) {
+                if (gJoy_array[2] > 10) {
+                    keys.acc = 1;
+                }
+            } else {
+                if (HasCurrentJoystick()) {
+                    joystick.acc = gJoy_array[2];
+                }
+            }
+        }
+        if (KeyIsDownNoMouldiness(50) && !gRace_finished && !c->knackered && !gWait_for_it) {
+            keys.dec = 1;
+        }
+        if (!keys.dec) {
+            if (PDIsJoystickDPadEnabled()) {
+                if (gJoy_array[3] > 10) {
+                    keys.dec = 1;
+                }
+            } else {
+                if (HasCurrentJoystick()) {
+                    joystick.dec = gJoy_array[3];
+                }
+            }
+        }
+
+        if (gCredit_multiplier) {
+            int temp;
+
+            temp = joystick.dec;
+            joystick.dec = joystick.acc;
+            joystick.acc = temp;
+
+            temp = joystick.left;
+            joystick.left = joystick.right;
+            joystick.right = temp;
+
+            temp = keys.dec;
+            keys.dec = keys.acc;
+            keys.acc = temp;
+
+            temp = keys.left;
+            keys.left = keys.right;
+            keys.right = temp;
+        }
+        if (KeyIsDownNoMouldiness(56) && c->gear >= 0) {
+            keys.change_down = 1;
+            c->just_changed_gear = 1;
+            if (keys.acc || joystick.acc > 32000) {
+                c->traction_control = 0;
+            } else if (c->gear > 1) {
+                c->gear -= !c->keys.change_down;
+            }
+            if (gCountdown != 0 && !c->keys.change_down) {
+                JumpTheStart();
+            }
+        }
+        if (gCar_flying) {
+            if (KeyIsDownNoMouldiness(14)) {
+                keys.up = 1;
+            }
+            if (KeyIsDownNoMouldiness(12)) {
+                keys.down = 1;
+            }
+        }
+        if (KeyIsDownNoMouldiness(59)) {
+            if (!gEntering_message) {
+                keys.horn = 1;
+            }
+        }
+        c->keys = keys;
+        c->joystick = joystick;
+    }
+}
+
+// FUNCTION: CARMA2_HW 0x00444270
+// FUNCTION: CARMA2_SW 0x00444350
+void C2_HOOK_FASTCALL PollCameraControls(tU32 pCamera_period) {
+    int left;
+    int right;
+
+    left = PDKeyDown(0);
+    right = PDKeyDown(1);
+    if (left || right) {
+        CheckMapMoveKeys(left, right);
+        gCamera_key_flags.field_0x0_bit1 = 0;
+        gCamera_key_flags.field_0x0_bit2 = 0;
+        gCamera_key_flags.field_0x0_bit3 = 0;
+        gCamera_key_flags.field_0x0_bit4 = 0;
+    } else {
+        gCamera_key_flags.field_0x0_bit1 = KeyIsDownNoMouldiness(31);
+        gCamera_key_flags.field_0x0_bit2 = KeyIsDownNoMouldiness(32);
+        gCamera_key_flags.field_0x0_bit3 = KeyIsDownNoMouldiness(33);
+        gCamera_key_flags.field_0x0_bit4 = KeyIsDownNoMouldiness(34);
+        gCamera_key_flags.field_0x0_bit0 = PDKeyDown(2);
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x00444350
 // FUNCTION: CARMA2_SW 0x00444430
@@ -493,7 +752,30 @@ void C2_HOOK_FASTCALL ToggleFlying(void) {
     }
 }
 
-// CycleInvulnerability
+// FUNCTION: CARMA2_HW 0x00444420
+// FUNCTION: CARMA2_SW 0x00444500
+void C2_HOOK_FASTCALL CycleInvulnerability(void) {
+    char message[256];
+
+    gInvulnerability = (gInvulnerability + 1) % 8;
+    gCar_to_view->invulnerable_no_damage = gInvulnerability & 0x1;
+    gCar_to_view->invulnerable_no_crushage = gInvulnerability & 0x2;
+    gCar_to_view->invulnerable_no_wastage = gInvulnerability & 0x4;
+    message[0] = '\0';
+    if (gInvulnerability == 0) {
+        strcpy(message, "FULLY VULNERABLE");
+    }
+    if (gCar_to_view->invulnerable_no_damage) {
+        strcat(message, " NO DAMAGE");
+    }
+    if (gCar_to_view->invulnerable_no_crushage != 0) {
+        strcat(message, " NO CRUSHAGE");
+    }
+    if (gCar_to_view->invulnerable_no_wastage != 0) {
+        strcat(message, " NO WASTAGE");
+    }
+    NewTextHeadupSlot(4, 0, 1000, -4, message);
+}
 
 // FUNCTION: CARMA2_HW 0x00444590
 void C2_HOOK_FASTCALL ToggleTimerFreeze(void) {
@@ -526,7 +808,11 @@ void C2_HOOK_FASTCALL ToggleHeadupMap(int pArg) {
 
 // HackyMapFixForMac3dfx
 
-// ToggleMap
+// STUB: CARMA2_HW 0x00444610
+// STUB: CARMA2_SW 0x004446f0
+void C2_HOOK_FASTCALL ToggleMap(void) {
+    NOT_IMPLEMENTED();
+}
 
 // FUNCTION: CARMA2_HW 0x004446f0
 // FUNCTION: CARMA2_SW 0x004447d0

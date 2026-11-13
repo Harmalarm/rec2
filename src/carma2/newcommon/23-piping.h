@@ -32,8 +32,9 @@ extern tU8* gPipe_record_ptr;
 extern tU32 gPipe_sound_start_time;
 extern tU32 gPipe_sound_time_window;
 extern int gDisable_advance;
+extern tPipe_smudge_data* gCrush_space;
 
-// ARReplayForwards
+extern int C2_HOOK_FASTCALL ARReplayForwards(void);
 
 extern int C2_HOOK_FASTCALL ARReplayIsReallyPaused(void);
 
@@ -73,7 +74,7 @@ extern int C2_HOOK_FASTCALL ARSomeReplayLeft(void);
 
 // StartPipingSession2
 
-// ARStartPipingSession
+extern void C2_HOOK_FASTCALL ARStartPipingSession(tPipe_chunk_type pType);
 
 extern void C2_HOOK_FASTCALL EndPipingSession2(int pMunge_reentrancy);
 
@@ -145,6 +146,8 @@ extern void C2_HOOK_FASTCALL ARMainLoopStart(void);
 
 // InitLastDamageArrayEtc
 
+extern void C2_HOOK_FASTCALL ResetCars(void);
+
 // PipeObjectPosition
 
 // PipeCarPositions
@@ -183,15 +186,15 @@ extern void C2_HOOK_FASTCALL AddSmokeColumnToPipingSession(int pIndex, const tSm
 
 // AddFlameToPipingSession
 
-// AddSplashToPipingSession
+extern void C2_HOOK_FASTCALL AddSplashToPipingSession(tPhysics_object* pObject);
 
-// AddExtendedSplashToPipingSession
+extern void C2_HOOK_FASTCALL AddExtendedSplashToPipingSession(tPhysics_object* pObject, void* pSubject);
 
 // AddCarToPipingSession
 
 // AddDamageToPipingSession
 
-// AddProxRayToPipingSession
+extern void C2_HOOK_FASTCALL AddProxRayToPipingSession(int pRay_index, tCar_spec* pCar, tU16 pPed_index, tU32 pTime);
 
 extern void C2_HOOK_FASTCALL AddFlapToPipingSession(br_actor* pActor, br_angle pAngle);
 
@@ -205,11 +208,11 @@ extern void C2_HOOK_FASTCALL AddNapalmBoltToPipingSession(int pIndex, tPedestria
 
 extern void C2_HOOK_FASTCALL PipeSingleScreenWobble(int pWobble_x, int pWobble_y);
 
-// PipeSingleGrooveStop
+extern void C2_HOOK_FASTCALL PipeSingleGrooveStop(int pGroove_index, br_matrix34* pMatrix, int pPath_interrupt, int pObject_interrupt, float pPath_resumption, float pObject_resumption);
 
 extern void C2_HOOK_FASTCALL PipeSingleNonCar(uintptr_t pId, br_actor* pActor);
 
-// PipeSingleOilSpill
+extern void C2_HOOK_FASTCALL PipeSingleOilSpill(int pIndex, br_matrix34* pMat, br_scalar pFull_size, br_scalar pGrow_rate, tU32 pSpill_time, tU32 pStop_time, tCar_spec* pCar, br_vector3* pOriginal_pos, br_pixelmap* pPixelmap);
 
 extern void C2_HOOK_FASTCALL PipeSingleFrameFinish(void);
 
@@ -221,7 +224,7 @@ extern void C2_HOOK_FASTCALL PipeSingleSpecial(tSpecial_type pType);
 
 // PipeSingleCarIncident
 
-// PipeSinglePedIncident
+extern void C2_HOOK_FASTCALL PipeSinglePedIncident(tPedestrian* pPed, br_actor* pActor);
 
 extern void C2_HOOK_FASTCALL PipeSingleWallIncident(float pSeverity, br_vector3* pImpact_point);
 
@@ -257,17 +260,17 @@ extern void C2_HOOK_FASTCALL PipeSingleRepulseRay(int pIndex, br_vector3* pOrigi
 
 extern void C2_HOOK_FASTCALL PipeSinglePedDir(int pId, const br_vector3* pDir);
 
-// PipeSinglePedMove
+extern void C2_HOOK_FASTCALL PipeSinglePedMove(tPedestrian* pPed, tS16 pArg2, tS16 pOriginal_move_id, tS16 pMove_id, float pOriginal_speed, float pSpeed, int pArg7, int pArg8, br_vector3* pOriginal_pos, br_vector3* pPos, int pOriginal_action, int pAction, br_matrix34* pMatrix);
 
 extern void C2_HOOK_FASTCALL PipeSinglePedPhysics(int pId, br_matrix34* pMat);
 
 extern void C2_HOOK_FASTCALL PipeSinglePedDismember(tPedestrian* pPed, tU8 pBone_index, tS8 pOld_value, tS8 pNew_value);
 
-// PipeSinglePedFPChange
+extern void C2_HOOK_FASTCALL PipeSinglePedFPChange(tPedestrian* pPed, float pOld_speed, float pNew_speed);
 
 extern void C2_HOOK_FASTCALL PipeSinglePedPos(const tPedestrian* pPed, const br_vector3* pPos, const br_vector3* pVelocity);
 
-// PipeSinglePedModelChange
+extern void C2_HOOK_FASTCALL PipeSinglePedModelChange(tPedestrian* pPed, int pBone_index, br_model* pOld_model, int pModel_index, int pOld_model_set, int pModel_set);
 
 extern void C2_HOOK_FASTCALL PipeSinglePHILObject(tPhysics_object* pObject);
 
@@ -393,7 +396,7 @@ extern void C2_HOOK_FASTCALL ApplyPedDir(tPipe_chunk** pChunk);
 
 // ApplyPedDismember
 
-// ApplyPedFPChange
+extern void C2_HOOK_FASTCALL ApplyPedFPChange(tPipe_chunk** pChunk);
 
 // ApplyPedPos
 
@@ -437,7 +440,7 @@ extern void C2_HOOK_FASTCALL ApplyShitMine(tPipe_chunk** pChunk);
 
 extern void C2_HOOK_FASTCALL ApplyEndShitMine(tPipe_chunk** pChunk);
 
-// ApplyTransformType
+extern void C2_HOOK_FASTCALL ApplyTransformType(tPipe_chunk** pChunk);
 
 // ApplyOppoRenderage
 
@@ -449,15 +452,15 @@ extern void C2_HOOK_FASTCALL UndoSmudge(tPipe_chunk** pChunk, tPipe_chunk* pPrev
 
 // UndoSpecial
 
-// UndoScreenWobble
+extern void C2_HOOK_FASTCALL UndoScreenWobble(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
 // UndoSplash
 
 // UndoExtendedSplash
 
-// UndoSkidAdjustment
+extern void C2_HOOK_FASTCALL UndoSkidAdjustment(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
-// UndoFlap
+extern void C2_HOOK_FASTCALL UndoFlap(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
 extern void C2_HOOK_FASTCALL UndoModelMash(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
@@ -489,9 +492,9 @@ extern void C2_HOOK_FASTCALL UndoSmashTextureChange(tPipe_chunk** pChunk, tPipe_
 
 extern void C2_HOOK_FASTCALL UndoPedDismember(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
-// UndoPedFPChange
+extern void C2_HOOK_FASTCALL UndoPedFPChange(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
-// UndoPedPos
+extern void C2_HOOK_FASTCALL UndoPedPos(tPipe_chunk** pChunk, tPipe_chunk* pPrev_chunk);
 
 // UndoPedModelChange
 

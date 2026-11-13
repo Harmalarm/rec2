@@ -24,6 +24,12 @@ extern tWreck_gallery_car_info gWreck_gallery_car_infos[30];
 extern tNet_game_type gFrontend_game_type;
 extern tStruct_00686508 gUNK_006883b0;
 extern tStruct_00686508 gUNK_006886e8;
+extern br_actor* gFrontend_wrecks_actor;
+extern br_actor* gFrontend_wrecks_camera;
+extern int gFrontend_wrecks_hscroll;
+extern br_pixelmap* gFrontend_wrecks_pixelmap;
+extern tU32 gFrontend_wrecks_previous_update;
+extern br_actor* gFrontend_wrecks_light;
 
 extern tU32 gFrontend_last_scroll;
 extern tU32 gNet_synch_start;
@@ -43,6 +49,12 @@ extern int gFrontend_wrecks_rotate_prev_y;
 
 extern int gFrontend_controls_count_keys;
 extern int gINT_00688748;
+extern br_material* gFrontend_backdrop_materials[3];
+extern br_token_value gFrontend_backdrop1_material_prims[3];
+extern br_token_value gFrontend_backdrop2_material_prims[3];
+extern br_token_value gFrontend_backdrop0_material_prims[3];
+extern br_actor* gFrontend_camera;
+extern br_actor* gFrontend_backdrop_actors[3];
 
 // SetGameTarget
 
@@ -240,7 +252,7 @@ extern void C2_HOOK_FASTCALL FRONTEND_PingPongFlash(void);
 
 // FRONTEND_DrawMenu
 
-// FRONTEND_Setup2D
+extern void C2_HOOK_FASTCALL FRONTEND_Setup2D(void);
 
 // FRONTEND_Setup
 
@@ -258,7 +270,7 @@ extern int C2_HOOK_FASTCALL StopGettingInputString(void);
 
 extern int C2_HOOK_FASTCALL StartGettingInputString(char* pBuffer, int pBuffer_size);
 
-// DisposeWrecksGallery
+extern void C2_HOOK_FASTCALL DisposeWrecksGallery(void);
 
 extern int C2_HOOK_FASTCALL ScrollToNextCar(tFrontend_spec* pFrontend);
 
@@ -266,11 +278,11 @@ extern int C2_HOOK_FASTCALL ScrollToPrevCar(tFrontend_spec* pFrontend);
 
 extern int C2_HOOK_FASTCALL BuyCurrentCar(tFrontend_spec* pFrontend);
 
-// WrecksInFunc
+extern int C2_HOOK_FASTCALL WrecksInFunc(tFrontend_spec* pFrontend);
 
 extern int C2_HOOK_FASTCALL KeepInRange(int pIndex, int pRange);
 
-// WrecksOutFunc
+extern int C2_HOOK_FASTCALL WrecksOutFunc(tFrontend_spec* pFrontend);
 
 // WrecksUpdateFunc
 
@@ -376,7 +388,13 @@ extern void C2_HOOK_FASTCALL StripControls(char* pStr);
 
 // LoadKeyNames
 
-// DisposeKeyNames
+extern void C2_HOOK_FASTCALL DisposeKeyNames(void);
+
+extern void C2_HOOK_FASTCALL LoadKeyMapping(void);
+
+extern void C2_HOOK_FASTCALL SaveKeyMapping(void);
+
+extern void C2_HOOK_FASTCALL ChengeKeyMapIndex(int pIndex);
 
 extern void C2_HOOK_FASTCALL RefreshScrollSet(tFrontend_spec* pFrontend);
 
@@ -398,7 +416,7 @@ extern void C2_HOOK_FASTCALL DisplayJoystickSettings(tFrontend_spec* pFrontend);
 
 extern void C2_HOOK_FASTCALL SaveAllJoystickData(void);
 
-// Controls_SwitchKeymapSet
+extern int C2_HOOK_FASTCALL Controls_SwitchKeymapSet(tFrontend_spec* pFrontend);
 
 extern int C2_HOOK_FASTCALL Controls_KeyUp(tFrontend_spec* pFrontend);
 
@@ -406,7 +424,7 @@ extern int C2_HOOK_FASTCALL Controls_KeyDown(tFrontend_spec* pFrontend);
 
 // Controls_Infunc
 
-// Controls_Outfunc
+extern int C2_HOOK_FASTCALL Controls_Outfunc(tFrontend_spec* pFrontend);
 
 extern int C2_HOOK_FASTCALL Controls_SlotActivated(tFrontend_spec* pFrontend);
 

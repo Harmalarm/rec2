@@ -16,6 +16,7 @@
 #include "41-utility.h"
 #include "49-physics.h"
 #include "51-smash.h"
+#include "53-controls.h"
 #include "60-phil.h"
 #include "globvars.h"
 #include "globvrpb.h"
@@ -37,6 +38,42 @@ br_scalar gForce_to_movement_factor;
 // GLOBAL: CARMA2_HW 0x00679550
 // GLOBAL: CARMA2_SW 0x00673cc0
 br_scalar gMax_detach_time_ms;
+
+// GLOBAL: CARMA2_HW 0x006796c8
+// GLOBAL: CARMA2_SW 0x00673e38
+tCrush_list_item gCrush_lists[8];
+
+// GLOBAL: CARMA2_HW 0x006796bc
+// GLOBAL: CARMA2_SW 0x00673e2c
+int gCount_queued_drone_crushes;
+
+// GLOBAL: CARMA2_HW 0x0067bad0
+// GLOBAL: CARMA2_SW 0x00676240
+int gCount_crush_detach_list;
+
+// GLOBAL: CARMA2_HW 0x0067bdfc
+// GLOBAL: CARMA2_SW 0x0067656c
+int gINT_0067bdfc;
+
+// GLOBAL: CARMA2_HW 0x0067be08
+// GLOBAL: CARMA2_SW 0x00676578
+tU8 gCrush_data_entry_counter;
+
+// GLOBAL: CARMA2_HW 0x0067bdf0
+// GLOBAL: CARMA2_SW 0x00676560
+int gCount_net_crush_detach_list;
+
+// GLOBAL: CARMA2_HW 0x0067b838
+// GLOBAL: CARMA2_SW 0x00675fa8
+int gCount_net_crush_semi_detach_bit_list;
+
+// GLOBAL: CARMA2_HW 0x0067bd60
+// GLOBAL: CARMA2_SW 0x006764d0
+int gCount_net_crush_full_detach_bit_list;
+
+// GLOBAL: CARMA2_HW 0x0067b7cc
+// GLOBAL: CARMA2_SW 0x00675f3c
+int gCount_car_damage_crush_list;
 
 // GLOBAL: CARMA2_HW 0x006796b8
 // GLOBAL: CARMA2_SW 0x00673e28
@@ -77,10 +114,6 @@ br_scalar gMin_force_to_split_Y_per_tonne;
 // GLOBAL: CARMA2_HW 0x0067bd64
 // GLOBAL: CARMA2_SW 0x006764d4
 int gMin_split_damage;
-
-// GLOBAL: CARMA2_HW 0x0067bde8
-// GLOBAL: CARMA2_SW 0x00676558
-br_scalar gMin_bend_force;
 
 // GLOBAL: CARMA2_HW 0x0067bdec
 // GLOBAL: CARMA2_SW 0x0067655c
@@ -136,7 +169,11 @@ tDriver gDetached_bit_driver;
 
 // GLOBAL: CARMA2_HW 0x0067bd68
 // GLOBAL: CARMA2_SW 0x006764d8
-tPhysics_joint* gTrack_crush_joints[32];
+tPhysics_joint* gTrack_crush_joints[32] = { 0 };
+
+// GLOBAL: CARMA2_HW 0x0067bde8
+// GLOBAL: CARMA2_SW 0x00676558
+br_scalar gMin_bend_force = 0.f;
 
 // GLOBAL: CARMA2_HW 0x0067b7b8
 // GLOBAL: CARMA2_SW 0x00675f28
@@ -228,7 +265,13 @@ void C2_HOOK_FASTCALL ReadCrushSettings(FILE* pF) {
     }
 }
 
-// ClearCrushLists
+void C2_HOOK_FASTCALL ClearCrushLists(void) {
+    tCrush_list_item* list;
+
+    for (list = gCrush_lists; list->car_spec != NULL; list++) {
+        list->car_spec = NULL;
+    }
+}
 
 // RemoveCarFromCrushLists
 
@@ -279,7 +322,28 @@ void C2_HOOK_FASTCALL InitCrushSystems(void) {
     gGonad_sphere_collision_shape = (tPhysics_shape*)AllocateShapeSphere(kMem_crush_data);
 }
 
-// ResetCrushSystems
+// FUNCTION: CARMA2_HW 0x0042a190
+// FUNCTION: CARMA2_SW 0x0042a220
+void C2_HOOK_FASTCALL ResetCrushSystems(void) {
+    int i;
+
+    for (i = 0; i < (int)REC2_ASIZE(gTrack_crush_joints); i++) {
+        gTrack_crush_joints[i]->type = eJoint_none;
+    }
+    gDetached_bit_crush_info_buffer.field_0x8 = 0;
+    gSplit_car_crush_info_buffer.field_0x8 = 0;
+    ClearCrushLists();
+    gCount_queued_drone_crushes = 0;
+    gCount_crush_detach_list = 0;
+    gINT_0067bdfc = 0;
+    gCount_toggled_doors = 0;
+    gCrush_data_entry_counter = 0;
+    gCount_net_crush_detach_list = 0;
+    gCount_net_crush_semi_detach_bit_list = 0;
+    gCount_net_crush_full_detach_bit_list = 0;
+    gCount_net_crush_reattach_bit_list = 0;
+    gCount_car_damage_crush_list = 0;
+}
 
 // ReadCrushData
 
@@ -960,19 +1024,46 @@ int C2_HOOK_FASTCALL GetSDBJointPosAndBounds(br_vector3* pP1, br_vector3* pP2, b
     return 0;
 }
 
-#ifdef REC2_MATCHING
-#pragma auto_inline(off)
-#endif
-
-// STUB: CARMA2_HW 0x0042dab0
-// STUB: CARMA2_SW 0x0042db20
+// FUNCTION: CARMA2_HW 0x0042dab0
+// FUNCTION: CARMA2_SW 0x0042db20
 void C2_HOOK_FASTCALL SendSemiDetachBit(tCar_spec* pCar, br_actor* pActor, float pArg3, tNet_game_player_info* pPlayer) {
-    NOT_IMPLEMENTED();
-}
+    tNet_message* message;
+    tUser_crush_data* user_crush;
+    br_vector3 p1;
+    br_vector3 p2;
+    br_vector3 p3;
+    br_bounds3 bounds;
 
-#ifdef REC2_MATCHING
-#pragma auto_inline(on)
-#endif
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, player, 0x4);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, id, 0x8);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, time, 0xc);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, point_1, 0x10);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, point_2, 0x16);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, point_3, 0x1c);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, bounds_min, 0x22);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, bounds_max, 0x28);
+    C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tNet_message_chunk_semi_detach_bit, value, 0x2e);
+    C2_HOOK_BUG_ON(sizeof(tNet_message_chunk_semi_detach_bit) != 0x30);
+
+    message = NetBuildGuaranteedMessage(eNet_message_chunk_type_semi_detach_bit, 0);
+    message->contents.semi_detach_bit.player = NetPlayerFromCar(pCar)->ID;
+    user_crush = pActor->user;
+    message->contents.semi_detach_bit.id = user_crush->crush_data->id;
+    message->contents.semi_detach_bit.time = gPHIL_last_physics_tick + 120;
+    if (GetSDBJointPosAndBounds(&p1, &p2, &p3, &bounds, pActor) == 0) {
+        CompressVector3(&message->contents.semi_detach_bit.point_1, &p1, -10.0f, 10.0f);
+        CompressVector3(&message->contents.semi_detach_bit.point_2, &p2, -10.0f, 10.0f);
+        CompressVector3(&message->contents.semi_detach_bit.point_3, &p3, -10.0f, 10.0f);
+        CompressVector3(&message->contents.semi_detach_bit.bounds_min, &bounds.min, -10.0f, 10.0f);
+        CompressVector3(&message->contents.semi_detach_bit.bounds_max, &bounds.max, -10.0f, 10.0f);
+        message->contents.semi_detach_bit.value = DRScalarToU16(pArg3, 0.0f, 40.0f);
+        if (pPlayer != NULL) {
+            NetGuaranteedSendMessageToPlayer(gCurrent_net_game, message, pPlayer->ID, NULL);
+        } else {
+            NetGuaranteedSendMessageToEverybody(gCurrent_net_game, message, NULL);
+        }
+    }
+}
 
 // SendDetachBit
 
@@ -1044,22 +1135,61 @@ void C2_HOOK_FASTCALL StopFlapping(br_actor* pActor, tCar_spec* pCar_spec) {
 
 // DoFlapping
 
-// STUB: CARMA2_HW 0x0042ddc0
-// STUB: CARMA2_SW 0x0042de30
+// FUNCTION: CARMA2_HW 0x0042ddc0
+// FUNCTION: CARMA2_SW 0x0042de30
 intptr_t C2_HOOK_CDECL ToggleFlapsCB2(br_actor* pActor, void* pCar) {
-    NOT_IMPLEMENTED();
+    tUser_crush_data* user_crush;
+    tCar_crush_buffer_entry* crush_data;
+    tCar_crush_flap_data* flap_data;
+
+    user_crush = pActor->user;
+    if (user_crush != NULL) {
+        crush_data = user_crush->crush_data;
+        if (crush_data != NULL) {
+            flap_data = crush_data->flap_data;
+            if (flap_data != NULL && flap_data->kev_o_flap != 0) {
+                if (flap_data->field_0x0 != 0) {
+                    SetFlappage(pActor, pCar, 0, 0.f);
+                } else {
+                    SetFlappage(pActor, pCar, 0x1, 20.f);
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 // FUNCTION: CARMA2_HW 0x0042ddb0
 // FUNCTION: CARMA2_SW 0x0042de20
-int C2_HOOK_FASTCALL ToggleFlapsCB(tPhysics_object* pCollision_info, tCar_spec* pCar) {
+int C2_HOOK_FASTCALL ToggleFlapsCB(tPhysics_object* pCollision_info, void* pCar) {
     DRActorEnumRecurse(pCollision_info->actor, ToggleFlapsCB2, pCar);
     return 0;
 }
 
-// SendToggleFlaps
+void C2_HOOK_FASTCALL SendToggleFlaps(tCar_spec* pCar) {
+    tNet_message_chunk* chunk;
+    tNet_game_player_info* player;
 
-// ToggleFlaps
+    chunk = NetGetToHostContents(eNet_message_chunk_type_toggle_doors, 0);
+    player = NetPlayerFromCar(pCar);
+    if (player != NULL) {
+        chunk->toggle_doors.id = player->ID;
+    }
+}
+
+// FUNCTION: CARMA2_HW 0x0042dd50
+// FUNCTION: CARMA2_SW 0x0042ddc0
+void C2_HOOK_FASTCALL ToggleFlaps(void) {
+
+    if (gCountdown || gToo_poor_for_recovery_timeout) {
+        return;
+    }
+    if (gNet_mode == eNet_mode_none || gNet_mode == eNet_mode_host) {
+        PhysicsObjectRecurse(gProgram_state.current_car.collision_info, ToggleFlapsCB, &gProgram_state.current_car);
+    } else {
+        SendToggleFlaps(&gProgram_state.current_car);
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x00434910
 // FUNCTION: CARMA2_SW 0x00434940
@@ -1617,7 +1747,16 @@ void C2_HOOK_FASTCALL ReceivedReAttachAllBits(tNet_message_chunk* pContents) {
 
 // ReceivedDBNonCarPosition
 
-// ReceivedToggleFlaps
+// FUNCTION: CARMA2_HW 0x0043d670
+// FUNCTION: CARMA2_SW 0x0043d6c0
+void C2_HOOK_FASTCALL ReceivedToggleFlaps(tNet_message_chunk* pContents) {
+    tCar_spec* car;
+
+    car = NetCarFromPlayerID(pContents->toggle_doors.id);
+    if (car != NULL) {
+        PhysicsObjectRecurse(car->collision_info, ToggleFlapsCB, car);
+    }
+}
 
 // SHNonCarOwner
 
@@ -1742,4 +1881,3 @@ void C2_HOOK_FASTCALL SetAllShapeStatusFlags(tCar_crush_network_shapes* pShapes)
         }
     }
 }
-
