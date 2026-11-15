@@ -1424,9 +1424,6 @@ char* C2_HOOK_STDCALL DfNameReadText(br_datafile* df, char* name) {
     }
     if (data == NULL || *data != '"') {
         BrFailure("no name string");
-#ifdef BRENDER_FIX_BUGS
-        return NULL;
-#endif
     }
     BrStrNCpy(name, data + 1, 0xff);
     name[0xff] = '\0';
