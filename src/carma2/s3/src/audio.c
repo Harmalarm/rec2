@@ -53,6 +53,7 @@ int gS3_soundbank_buffer_len;
 char* gS3_soundbank_buffer;
 
 // GLOBAL: CARMA2_HW 0x006b2dc8
+// GLOBAL: CARMA2_SW 0x006ac550
 tS3_callbacks gS3_callbacks;
 
 // GLOBAL: CARMA2_HW 0x007a0758
@@ -344,16 +345,18 @@ int C2_HOOK_FASTCALL S3SetOutletVolume(tS3_outlet* pOutlet, int pVolume) {
 int C2_HOOK_FASTCALL S3StopOutletSound(tS3_outlet* pOutlet) {
     tS3_channel* c;
 
-    if (!gS3_enabled) {
-        return 0;
-    }
-    for (c = pOutlet->channel_list; c != NULL; c = c->next) {
-        // FUN_006a280(c);
-        if (c->active) {
-            c->spatial_sound = 0;
-            S3StopChannel(c);
-            c->needs_service = 1;
+    if (gS3_enabled) {
+        c = pOutlet->channel_list;
+        while (c != NULL) {
+            S3ServiceSpatialSound(c);
+            if (c->active) {
+                c->spatial_sound = 0;
+                S3StopChannel(c);
+                c->needs_service = 1;
+            }
+            c = c->next;
         }
+        return 0;
     }
     return 0;
 }
@@ -396,16 +399,18 @@ int C2_HOOK_FASTCALL S3ReleaseSoundSource(tS3_sound_source* src) {
 
 // FUNCTION: CARMA2_HW 0x005657bd
 // FUNCTION: CARMA2_SW 0x00560e5d
-void C2_HOOK_FASTCALL S3StopAllOutletSounds(void) {
+int C2_HOOK_FASTCALL S3StopAllOutletSounds(void) {
     tS3_outlet* o;
 
-    if (!gS3_enabled) {
-        return;
+    if (gS3_enabled) {
+        o = gS3_state.outlets;
+        while (o != NULL) {
+            S3StopOutletSound(o);
+            o = o->next;
+        }
+        return 0;
     }
-
-    for (o = gS3_state.outlets; o != NULL; o = o->next) {
-        S3StopOutletSound(o);
-    }
+    return 0;
 }
 
 // FUNCTION: CARMA2_HW 0x00564ae2
@@ -897,7 +902,9 @@ void C2_HOOK_FASTCALL S3SoundBankReaderAdvance(tS3_soundbank_read_ctx* pContext,
 }
 
 // FUNCTION: CARMA2_HW 0x00565a8a
+// FUNCTION: CARMA2_SW 0x0056112a
 tS3_descriptor* C2_HOOK_FASTCALL S3CreateDescriptor(void) {
+    tS3_descriptor* previous;
     tS3_descriptor* descriptor;
 
     C2_HOOK_BUG_ON(sizeof(tS3_descriptor) != 0x4c);
@@ -912,8 +919,9 @@ tS3_descriptor* C2_HOOK_FASTCALL S3CreateDescriptor(void) {
     C2_HOOK_STATIC_ASSERT_STRUCT_OFFSET(tS3_descriptor, next, 0x2c);
 
     memset(descriptor, 0, sizeof(tS3_descriptor));
-    gS3_state.root_descriptor->next = descriptor;
-    descriptor->prev = gS3_state.root_descriptor;
+    previous = gS3_state.root_descriptor;
+    previous->next = descriptor;
+    descriptor->prev = previous;
     gS3_state.root_descriptor = descriptor;
     return descriptor;
 }
@@ -1292,6 +1300,7 @@ int C2_HOOK_FASTCALL S3SoundStillPlaying(int pTag) {
 }
 
 // FUNCTION: CARMA2_HW 0x0056583f
+// FUNCTION: CARMA2_SW 0x00560edf
 int C2_HOOK_FASTCALL S3GetLastError(void) {
 
     return gS3_last_error;
