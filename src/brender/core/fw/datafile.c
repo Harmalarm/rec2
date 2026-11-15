@@ -1403,7 +1403,7 @@ void* C2_HOOK_STDCALL DfBlockReadBinary(br_datafile* df, void* base, int* count,
 // FUNCTION: CARMA2_SW 0x00527310
 int C2_HOOK_STDCALL DfBlockSizeText(br_datafile* df, void* base, int block_size, int block_stride, int block_count, int size) {
 
-    return ((size * block_count * block_size + (32 - 1)) >> 5) + 2;
+    return ((size * block_count * block_size + (32 - 1)) / 32) + 2;
 }
 
 // FUNCTION: CARMA2_HW 0x0052c7a0
@@ -1416,20 +1416,19 @@ int C2_HOOK_STDCALL DfBlockSizeBinary(br_datafile* df, void* base, int block_siz
 // FUNCTION: CARMA2_HW 0x0052c7c0
 // FUNCTION: CARMA2_SW 0x00527350
 char* C2_HOOK_STDCALL DfNameReadText(br_datafile* df, char* name) {
-    char* id;
     char* data;
+    char* id;
 
     TextReadLine(df, &id, &data);
     if (BrStrCmp(id, "name") != 0) {
         BrFailure("no name");
     }
-    if ((data != NULL) && (*data == '\"')) {
-        BrStrNCpy(name, data + 1, 0xff);
-        name[0xff] = '\0';
-        return data;
+    if (data == NULL || *data != '"') {
+        BrFailure("no name string");
     }
-    BrFailure("no name string");
-    return NULL;
+    BrStrNCpy(name, data + 1, 0xff);
+    name[0xff] = '\0';
+    return name;
 }
 
 // FUNCTION: CARMA2_HW 0x0052c840
