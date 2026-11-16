@@ -1618,10 +1618,13 @@ void C2_HOOK_FASTCALL PedPreCollisionStuff(void) {
 
 // UpdateIfBackwardsAR
 
-// STUB: CARMA2_HW 0x004d69b0
+// FUNCTION: CARMA2_HW 0x004d6bb0
 // STUB: CARMA2_SW 0x004d2fb0
 int C2_HOOK_FASTCALL ChangePedScaling(br_vector3* pScale) {
-    NOT_IMPLEMENTED();
+    MungeAllCharacterMaterials((material_cbfn*)UnmakeMaterialBlendy);
+    MungeAllCharacterObjects(TurnOnCollisions);
+    MungeAllCharacterModels(ModelUpdatePrimitiveMaterials);
+    gGhost_pedestrians = 0;
 }
 
 // ChangeHeadScaling
