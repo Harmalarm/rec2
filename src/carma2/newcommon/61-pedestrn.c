@@ -1670,10 +1670,13 @@ void C2_HOOK_FASTCALL TurnOnGhostPeds(void) {
     NOT_IMPLEMENTED();
 }
 
-// STUB: CARMA2_HW 0x004d6bb0
+// FUNCTION: CARMA2_HW 0x004d6b40
 // STUB: CARMA2_SW 0x004d31b0
 void C2_HOOK_FASTCALL TurnOffGhostPeds(void) {
-    NOT_IMPLEMENTED();
+    MungeAllCharacterMaterials((material_cbfn*)MakeMaterialBlendy);
+    MungeAllCharacterObjects(TurnOffCollisions);
+    MungeAllCharacterModels(ModelUpdatePrimitiveMaterials);
+    gGhost_pedestrians = 1;
 }
 
 // FUNCTION: CARMA2_HW 0x004d6c10
