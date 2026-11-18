@@ -107,8 +107,68 @@ void C2_HOOK_FASTCALL GetMatrixFromOrientation(br_matrix34* pMatrix, const tFixe
 // STUB: CARMA2_HW 0x0049c0d0
 // STUB: CARMA2_SW 0x00498250
 int C2_HOOK_FASTCALL GetObjectNetworkStuff(tPhysics_object* pObject, tU8* pBuffer, tU32 pSize) {
+    br_quat orientation;
+    int i;
 
-    NOT_IMPLEMENTED();
+    if (pObject->physics_joint1 != NULL) {
+        switch (pObject->physics_joint1->type) {
+        case eJoint_hinge:
+        case eJoint_quick_hinge:
+            if (pSize < 0xc) {
+                return -1;
+            }
+            pBuffer[0] = (tU8)pObject->physics_joint1->type;
+            pBuffer[1] = pObject->uid;
+            *(tU16*)(pBuffer + 2) = ScalarToFraction(-39.2699089f, 39.2699089f,
+                pObject->omega.v[0] * pObject->physics_joint1->hinge_axis.v[0]
+                    + pObject->omega.v[1] * pObject->physics_joint1->hinge_axis.v[1]
+                    + pObject->omega.v[2] * pObject->physics_joint1->hinge_axis.v[2]);
+            BrMatrix34ToQuat(&orientation, &pObject->transform_matrix);
+            *(tU16*)(pBuffer + 4) = ScalarToFraction(-1.0f, 1.0f, orientation.x);
+            *(tU16*)(pBuffer + 6) = ScalarToFraction(-1.0f, 1.0f, orientation.y);
+            *(tU16*)(pBuffer + 8) = FloatToFixedFraction(orientation.z, -1.0f, 1.0f);
+            *(tU16*)(pBuffer + 10) = FloatToFixedFraction(orientation.w, -1.0f, 1.0f);
+            return 0xc;
+        case eJoint_universal:
+        case eJoint_ball_n_socket:
+            if (pSize < 0x10) {
+                return -1;
+            }
+            pBuffer[0] = (tU8)pObject->physics_joint1->type;
+            pBuffer[1] = pObject->uid;
+            for (i = 0; i < 3; i++) {
+                *(tU16*)(pBuffer + 2 + i * 2) = ScalarToFraction(-39.2699089f, 39.2699089f, pObject->omega.v[i]);
+            }
+            BrMatrix34ToQuat(&orientation, &pObject->transform_matrix);
+            *(tU16*)(pBuffer + 8) = ScalarToFraction(-1.0f, 1.0f, orientation.x);
+            *(tU16*)(pBuffer + 10) = ScalarToFraction(-1.0f, 1.0f, orientation.y);
+            *(tU16*)(pBuffer + 12) = FloatToFixedFraction(orientation.z, -1.0f, 1.0f);
+            *(tU16*)(pBuffer + 14) = FloatToFixedFraction(orientation.w, -1.0f, 1.0f);
+            return 0x10;
+        case eJoint_none:
+            break;
+        default:
+            PhysicsError(ePhysicsError_error9, "netphys got messed up");
+            break;
+        }
+    }
+
+    if (pSize < 0x28) {
+        return -1;
+    }
+    pBuffer[0] = eJoint_none;
+    pBuffer[1] = pObject->uid;
+    for (i = 0; i < 3; i++) {
+        *(tU16*)(pBuffer + 2 + i * 2) = ScalarToFraction(-39.2699089f, 39.2699089f, pObject->omega.v[i]);
+    }
+    *(br_vector3*)(pBuffer + 8) = pObject->v;
+    BrMatrix34ToQuat(&orientation, &pObject->transform_matrix);
+    *(tU16*)(pBuffer + 0x14) = ScalarToFraction(-1.0f, 1.0f, orientation.x);
+    *(tU16*)(pBuffer + 0x16) = ScalarToFraction(-1.0f, 1.0f, orientation.y);
+    *(tU16*)(pBuffer + 0x18) = FloatToFixedFraction(orientation.z, -1.0f, 1.0f);
+    *(tU16*)(pBuffer + 0x1a) = FloatToFixedFraction(orientation.w, -1.0f, 1.0f);
+    *(br_vector3*)(pBuffer + 0x1c) = *(br_vector3*)pObject->transform_matrix.m[3];
+    return 0x28;
 }
 
 #ifdef REC2_MATCHING
@@ -137,6 +197,9 @@ int C2_HOOK_FASTCALL SizeOfObjectNetworkStuff(tPhysics_joint_type pType) {
 
 // FUNCTION: CARMA2_HW 0x0049c5e0
 // FUNCTION: CARMA2_SW 0x00498760
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
 int C2_HOOK_STDCALL FloatToFixedFraction(float pValue, float pMin, float pMax) {
     if (pValue > pMax) {
         pValue = pMax;
@@ -147,6 +210,9 @@ int C2_HOOK_STDCALL FloatToFixedFraction(float pValue, float pMin, float pMax) {
     pValue = ((pValue - pMin) / (pMax - pMin)) * 65534.f;
     return (int)(pValue + 0.5f);
 }
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // WriteObjectNetworkStuff
 
