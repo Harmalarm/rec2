@@ -104,8 +104,8 @@ void C2_HOOK_FASTCALL GetMatrixFromOrientation(br_matrix34* pMatrix, const tFixe
 #pragma auto_inline(off)
 #endif
 
-// STUB: CARMA2_HW 0x0049c0d0
-// STUB: CARMA2_SW 0x00498250
+// FUNCTION: CARMA2_HW 0x0049c0d0
+// FUNCTION: CARMA2_SW 0x00498250
 int C2_HOOK_FASTCALL GetObjectNetworkStuff(tPhysics_object* pObject, tU8* pBuffer, tU32 pSize) {
     br_quat orientation;
     int i;
