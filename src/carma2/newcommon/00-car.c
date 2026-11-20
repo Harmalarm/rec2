@@ -952,7 +952,7 @@ void C2_HOOK_FASTCALL MoveAndCollideNonCar(tNon_car_spec* pNon_car, br_scalar pD
 
 // FUNCTION: CARMA2_HW 0x00417180
 // FUNCTION: CARMA2_SW 0x004171b0
-// FUNCTION: CARMA2_CHEAT 0x00417180
+// FUNCTION: CARMA2_CHEAT 0x004173e0
 void C2_HOOK_FASTCALL ControlCar2(tCar_spec* pCar, br_scalar pDt) {
     br_scalar time_steps;
 
