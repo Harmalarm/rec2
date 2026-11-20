@@ -1035,7 +1035,58 @@ void C2_HOOK_FASTCALL ControlCar3(tCar_spec* pCar, br_scalar pDt) {
     }
 }
 
-// ControlCar4
+// FUNCTION: CARMA2_HW 0x004175e0
+// FUNCTION: CARMA2_SW 0x00417610
+// FUNCTION: CARMA2_CHEAT 0x00417840
+void C2_HOOK_FASTCALL ControlCar4(tCar_spec* pCar, br_scalar pDt) {
+    if (pCar->keys.left) {
+        if (pCar->turn_speed < 0.f) {
+            pCar->turn_speed = 0.f;
+        }
+        if (pCar->collision_info->velocity_car_space.v[2] > 0.f) {
+            pCar->turn_speed = (float)(pCar->turn_speed + .25 * pDt);
+        } else if ((pCar->curvature < 0.f || pCar->collision_info->omega.v[1] < -.001) && pCar->turn_speed == 0.f) {
+            pCar->turn_speed = (float)(25.f * pDt * (.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))));
+            if (pCar->collision_info->omega.v[1] < -.01) {
+                pCar->turn_speed = (float)(pCar->turn_speed - .25 * pDt * pCar->collision_info->omega.v[1]);
+            }
+        } else {
+            pCar->turn_speed = (float)(pCar->turn_speed - 25.f * pDt * (.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) * -.25);
+        }
+    }
+    if (pCar->keys.right) {
+        if (pCar->turn_speed > 0.f) {
+            pCar->turn_speed = 0.f;
+        }
+        if (pCar->collision_info->velocity_car_space.v[2] > 0.f) {
+            pCar->turn_speed = (float)(pCar->turn_speed - .25 * pDt);
+        } else if ((pCar->curvature > 0.f || pCar->collision_info->omega.v[1] > .001) && pCar->turn_speed == 0.f) {
+            pCar->turn_speed = (float)(25.f * pDt * (.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) * -1.0);
+            if (pCar->collision_info->omega.v[1] < -.01) {
+                pCar->turn_speed = (float)(pCar->turn_speed - .25 * pDt * pCar->collision_info->omega.v[1]);
+            }
+        } else {
+            pCar->turn_speed = (float)(pCar->turn_speed - 25.f * pDt * (.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) * .25);
+        }
+    }
+    if (!pCar->keys.left && !pCar->keys.right) {
+        pCar->turn_speed = 0.f;
+    } else if (fabs(pCar->turn_speed) < fabs(2.f * pDt * pCar->curvature) && pCar->curvature * pCar->turn_speed < 0.f) {
+        pCar->turn_speed = -(2.f * pDt * pCar->curvature);
+    }
+    pCar->curvature += pCar->turn_speed;
+    if (pCar->joystick.left > 0) {
+        pCar->curvature = (float)pCar->joystick.left * (float)pCar->joystick.left / 4294967300.f * pCar->maxcurve;
+    } else if (pCar->joystick.right >= 0) {
+        pCar->curvature = -((float)pCar->joystick.right * (float)pCar->joystick.right / 4294967300.f) * pCar->maxcurve;
+    }
+    if (pCar->curvature > pCar->maxcurve) {
+        pCar->curvature = pCar->maxcurve;
+    }
+    if (pCar->curvature < -pCar->maxcurve) {
+        pCar->curvature = -pCar->maxcurve;
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x00417a20
 // FUNCTION: CARMA2_SW 0x00417a50
