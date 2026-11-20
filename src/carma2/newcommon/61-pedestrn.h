@@ -46,8 +46,8 @@ extern br_vector3 gChanged_points[10];
 extern int gPed_dismember_spurting_member_count;
 extern int gPed_nearness;
 extern tTWTVFS gTwtPeds;
-extern tU32 DAT_006a0418;
-extern tPedestrian* PTR_00694120;
+extern tU32 gDAT_006a0418;
+extern tPedestrian* gPTR_00694120;
 extern int gPed_points[3];
 extern int gPed_score_multiplier;
 extern int gPed_recent_points;
@@ -389,9 +389,7 @@ extern void C2_HOOK_FASTCALL TurnOffCollisions(tPhysics_object* pObject);
 
 extern void C2_HOOK_FASTCALL TurnOnCollisions(tPhysics_object* pObject);
 
-extern void C2_HOOK_FASTCALL ModelUpdatePrimitiveMaterials(br_model* pModel);
-
-// UpdateModels
+extern void C2_HOOK_FASTCALL UpdateModels(br_model* pModel);
 
 extern void C2_HOOK_FASTCALL TurnOnGhostPeds(void);
 
@@ -605,9 +603,9 @@ extern float C2_HOOK_FASTCALL GetClearanceFromCharacterInstance(tPed_character_i
 
 extern void C2_HOOK_FASTCALL MungeAllCharacterMaterials(material_cbfn* pCallback);
 
-// MungeAllCharacterObjects
+extern void C2_HOOK_FASTCALL MungeAllCharacterObjects(void (C2_HOOK_FASTCALL *pCallback)(tPhysics_object*));
 
-// MungeAllCharacterModels
+extern void C2_HOOK_FASTCALL MungeAllCharacterModels(void (C2_HOOK_FASTCALL *pCallback)(br_model*));
 
 extern void C2_HOOK_FASTCALL DisableOverallMovement(void);
 

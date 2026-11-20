@@ -129,11 +129,11 @@ extern void C2_HOOK_FASTCALL ControlCar2(tCar_spec* pCar, br_scalar pDt);
 
 extern void C2_HOOK_FASTCALL ControlCar3(tCar_spec* pCar, br_scalar pDt);
 
-// ControlCar4
+extern void C2_HOOK_FASTCALL ControlCar4(tCar_spec* pCar, br_scalar pDt);
 
 extern void C2_HOOK_FASTCALL ControlCar5(tCar_spec* pCar, br_scalar pDt);
 
-// ControlCar1
+extern void C2_HOOK_FASTCALL ControlCar1(tCar_spec* pCar, br_scalar pDt);
 
 // SteeringSelfCentre
 

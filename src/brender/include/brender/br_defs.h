@@ -29,7 +29,7 @@
 
 #define BrAngleToRadian(a) ((br_scalar)((a) * (PI / 32768.0)))      // a * 0.00009587379924285257
 #define BrRadianToAngle(r) ((br_angle)(long)((r) * (32768.0 / PI))) // r * 10430.378350470453
-#define BrRadianToDegree(r) ((r) * (180.f / PI_F))                  // r * 57.29577951308232
+#define BrRadianToDegree(r) ((r) * (180.0 / PI))                    // r * 57.29577951308232
 
 #define BrFixedToScalar(f)	((br_scalar)((f)/(float)BR_ONE_LS))
 #define BrScalarToFixed(s)	(br_fixed_ls)((s)*(br_scalar)BR_ONE_LS)
@@ -62,7 +62,7 @@
 #define BR_SCALAR(x) ((br_scalar)(x))
 
 #define BR_COLOUR_RGBA(r, g, b, a) \
-    ((((unsigned int)(a)) << 24) | (((unsigned int)(r)) << 16) | (((unsigned int)(g)) << 8) | ((unsigned int)(b)))
+    ((((br_colour)(a)) << 24) | (((br_colour)(r)) << 16) | (((br_colour)(g)) << 8) | ((br_colour)(b)))
 
 #define BR_COLOUR_RED(c) ((c >> 16) & 0xff)
 #define BR_COLOUR_GRN(c) ((c >>  8) & 0xff)
