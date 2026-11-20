@@ -2680,20 +2680,22 @@ void C2_HOOK_FASTCALL MungeAllCharacterObjects(void (C2_HOOK_FASTCALL *pCallback
 // FUNCTION: CARMA2_SW 0x0040c550
 // FUNCTION: CARMA2_CHEAT 0x0040c600
 void C2_HOOK_FASTCALL MungeAllCharacterModels(void (C2_HOOK_FASTCALL *pCallback)(br_model*)) {
+    tPed_personality** personality;
     int i;
     int j;
     int k;
+    int l;
 
-    for (i = 0; i < (int)REC2_ASIZE(gPed_personalities); i++) {
-        tPed_personality* personality = gPed_personalities[i];
+    for (i = 0, personality = gPed_personalities; i < (int)REC2_ASIZE(gPed_personalities); i++, personality++) {
+        if (*personality != NULL) {
+            for (j = 0; j < (*personality)->form->count_bones; j++) {
+                for (k = 0; k < REC2_ASIZE((*personality)->bones[j].models[l].models); k++) { // 2x
+                    for (l = 0; l < (int)REC2_ASIZE((*personality)->bones[j].models); l++) { // 4x
+                        br_model* model = (*personality)->bones[j].models[l].models[k];
 
-        if (personality != NULL && personality->form->count_bones != 0) {
-            for (j = 0; j < 2; j++) {
-                for (k = 0; k < 4; k++) {
-                    br_model* model = personality->bones[j].models[k].models[0];
-
-                    if (model != NULL) {
-                        pCallback(model);
+                        if (model != NULL) {
+                            pCallback(model);
+                        }
                     }
                 }
             }
