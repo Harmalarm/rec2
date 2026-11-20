@@ -1097,7 +1097,87 @@ void C2_HOOK_FASTCALL ControlCar5(tCar_spec* pCar, br_scalar pDt) {
     pCar->keys.left = 1;
 }
 
-// ControlCar1
+// FUNCTION: CARMA2_HW 0x00417de0
+// FUNCTION: CARMA2_SW 0x00417e10
+// FUNCTION: CARMA2_CHEAT 0x00417c80
+void C2_HOOK_FASTCALL ControlCar1(tCar_spec* pCar, br_scalar pDt) {
+    br_scalar time_steps;
+
+    pCar->acc_force = 0.0f;
+    if (pCar->keys.acc) {
+        pCar->acc_force = 7.0f * pCar->collision_info->M;
+    }
+    if (pCar->keys.dec) {
+        pCar->acc_force = -(7.0f * pCar->collision_info->M);
+    }
+#ifdef REC2_CHEAT
+    if (pCar->keys.left) {
+        if (pCar->turn_speed < 0.0f) {
+            pCar->turn_speed = 0.0f;
+        }
+        if (pCar->curvature < 0.0f) {
+            pCar->turn_speed = (float)(pCar->turn_speed - pDt * -0.0625);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->turn_speed = (float)(pCar->turn_speed - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))) * -0.5f * 0.5);
+        }
+    }
+    if (pCar->keys.right) {
+        if (pCar->turn_speed > 0.0f) {
+            pCar->turn_speed = 0.0f;
+        }
+        if (pCar->curvature > 0.0f) {
+            pCar->turn_speed = (float)(pCar->turn_speed - pDt * 0.0625);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->turn_speed = (float)(pCar->turn_speed - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))) * 0.5f * 0.5);
+        }
+    }
+    if (!pCar->keys.left && !pCar->keys.right) {
+        pCar->turn_speed = 0.0f;
+        if (pCar->curvature < 0.0f && !pCar->keys.holdw) {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))) * -0.5f * 4.0);
+            if (pCar->curvature > 0.0f) {
+                pCar->curvature = 0.0f;
+            }
+        } else if (pCar->curvature > 0.0f && !pCar->keys.holdw) {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))) * 0.5f * 4.0);
+            if (pCar->curvature < 0.0f) {
+                pCar->curvature = 0.0f;
+            }
+        }
+    }
+    pCar->curvature += pCar->turn_speed;
+#else
+    if (pCar->keys.left) {
+        if (pCar->curvature < 0.0f) {
+            pCar->curvature = (float)(pCar->curvature + pDt * 0.25);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature + time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))));
+        }
+    }
+    if (pCar->keys.right) {
+        if (pCar->curvature > 0.0f) {
+            pCar->curvature = (float)(pCar->curvature - pDt * 0.25);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))));
+        }
+    }
+#endif
+    if (pCar->curvature > pCar->maxcurve) {
+        pCar->curvature = pCar->maxcurve;
+    }
+    if (pCar->curvature < -pCar->maxcurve) {
+        pCar->curvature = -pCar->maxcurve;
+    }
+#ifdef REC2_CHEAT
+    pCar->keys.left = 1;
+#endif
+}
 
 // SteeringSelfCentre
 
