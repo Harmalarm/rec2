@@ -102,7 +102,7 @@ void C2_HOOK_FASTCALL GetMatrixFromOrientation(br_matrix34* pMatrix, const tFixe
 
 tU16 C2_HOOK_FASTCALL OmegaCompScalarTo16(br_scalar pOmega) {
     /* Range is [-12.5 * PI, 12.5 * PI] */
-    return ScalarToFraction(pOmega, -39.269908, 39.269908);
+    return ScalarToFraction(pOmega, -39.269908f, 39.269908f);
 }
 
 // OmegaComp16ToScalar
