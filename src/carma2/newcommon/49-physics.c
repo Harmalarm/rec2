@@ -306,6 +306,7 @@ tFace_ref* C2_HOOK_FASTCALL RayCastThruFaceList2(br_vector3* pPosition, br_vecto
 
 // FUNCTION: CARMA2_HW 0x00425ba0
 // FUNCTION: CARMA2_SW 0x00425c40
+// FUNCTION: CARMA2_CHEAT 0x00425d30
 int C2_HOOK_FASTCALL BoundsOverlapTest(br_bounds3* pBounds_1, br_bounds3* pBounds_2) {
     int i;
 
