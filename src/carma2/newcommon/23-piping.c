@@ -894,14 +894,20 @@ void C2_HOOK_FASTCALL AddFlameToPipingSession(int pIndex, int pFrame, br_scalar 
         SIZE_OFFSET_PIPING(tPipe_chunk_flame, offset_z), gFloat_pipe_union.u32);
 }
 
-// STUB: CARMA2_HW 0x004c7130
-// STUB: CARMA2_SW 0x004c3860
+// FUNCTION: CARMA2_HW 0x004c7130
+// FUNCTION: CARMA2_SW 0x004c3860
+// FUNCTION: CARMA2_CHEAT 0x004ccc50
 void C2_HOOK_FASTCALL AddSplashToPipingSession(tPhysics_object* pObject) {
-    NOT_IMPLEMENTED();
+
+    gFloat_pipe_union.f = pObject->water_d;
+    ARDoSingleVariedSession(ePipe_chunk_splash, (uintptr_t)pObject, 2,
+        SIZE_OFFSET_PIPING(tPipe_chunk_splash, water_d), gFloat_pipe_union.u32,
+        SIZE_OFFSET_PIPING(tPipe_chunk_splash, normal), &pObject->water_normal);
 }
 
 // STUB: CARMA2_HW 0x004c7160
 // STUB: CARMA2_SW 0x004c3890
+// STUB: CARMA2_CHEAT 0x004ccc80
 void C2_HOOK_FASTCALL AddExtendedSplashToPipingSession(tPhysics_object* pObject, void* pSubject) {
     NOT_IMPLEMENTED();
 }
@@ -1473,7 +1479,15 @@ void C2_HOOK_FASTCALL PipeSingleGrooveOnOff(int pOn, br_actor* pActor, int pBloc
         SIZE_OFFSET_PIPING(tPipe_single_groove_on_of, block_flags), pBlock_flags);
 }
 
-// PipeSinglePowerupGot
+// FUNCTION: CARMA2_HW 0x004c8da0
+// FUNCTION: CARMA2_SW 0x004c54d0
+// FUNCTION: CARMA2_CHEAT 0x004ce8c0
+void C2_HOOK_FASTCALL PipeSinglePowerupGot(tPowerup* pPowerup, tCar_spec* pCar_spec) {
+    C2_HOOK_BUG_ON(sizeof(pCar_spec) != 0x4);
+
+    ARDoSingleVariedSession(ePipe_chunk_powerup_got, (uintptr_t)pPowerup, 1,
+        SIZE_OFFSET_PIPING(tPipe_chunk_powerup_got, car), pCar_spec);
+}
 
 // FUNCTION: CARMA2_HW 0x004c8dc0
 // FUNCTION: CARMA2_SW 0x004c54f0

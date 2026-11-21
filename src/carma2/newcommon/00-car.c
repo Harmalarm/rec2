@@ -43,6 +43,7 @@
 #include "c2_stdio.h"
 #include "rec2_macros.h"
 
+#include <limits.h>
 #include <math.h>
 
 // GLOBAL: CARMA2_HW 0x0079eda0
@@ -952,6 +953,7 @@ void C2_HOOK_FASTCALL MoveAndCollideNonCar(tNon_car_spec* pNon_car, br_scalar pD
 
 // FUNCTION: CARMA2_HW 0x00417180
 // FUNCTION: CARMA2_SW 0x004171b0
+// FUNCTION: CARMA2_CHEAT 0x004173e0
 void C2_HOOK_FASTCALL ControlCar2(tCar_spec* pCar, br_scalar pDt) {
     br_scalar time_steps;
 
@@ -998,6 +1000,7 @@ void C2_HOOK_FASTCALL ControlCar2(tCar_spec* pCar, br_scalar pDt) {
 
 // FUNCTION: CARMA2_HW 0x004173b0
 // FUNCTION: CARMA2_SW 0x004173e0
+// FUNCTION: CARMA2_CHEAT 0x00417610
 void C2_HOOK_FASTCALL ControlCar3(tCar_spec* pCar, br_scalar pDt) {
     br_scalar time_steps;
 
@@ -1035,10 +1038,63 @@ void C2_HOOK_FASTCALL ControlCar3(tCar_spec* pCar, br_scalar pDt) {
     }
 }
 
-// ControlCar4
+// FUNCTION: CARMA2_HW 0x004175e0
+// FUNCTION: CARMA2_SW 0x00417610
+// FUNCTION: CARMA2_CHEAT 0x00417840
+void C2_HOOK_FASTCALL ControlCar4(tCar_spec* pCar, br_scalar pDt) {
+
+    if (pCar->keys.left) {
+        if (pCar->turn_speed < 0.0f) {
+            pCar->turn_speed = 0.0f;
+        }
+        if (pCar->collision_info->velocity_car_space.v[2] > 0.0f) {
+            pCar->turn_speed = (float)(pCar->turn_speed + pDt / 4.0);
+        } else if ((pCar->curvature < 0.0f || pCar->collision_info->omega.v[1] < -0.001) && pCar->turn_speed == 0.0f) {
+            pCar->turn_speed = (float)(25.0f * pDt * (0.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))));
+            if (pCar->collision_info->omega.v[1] < -0.01) {
+                pCar->turn_speed = (float)(pCar->turn_speed - pDt * pCar->collision_info->omega.v[1] / 4.0);
+            }
+        } else {
+            pCar->turn_speed = (float)(pCar->turn_speed - 25.0f * pDt * (0.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) / -4.0);
+        }
+    }
+    if (pCar->keys.right) {
+        if (pCar->turn_speed > 0.0f) {
+            pCar->turn_speed = 0.0f;
+        }
+        if (pCar->collision_info->velocity_car_space.v[2] > 0.0f) {
+            pCar->turn_speed = (float)(pCar->turn_speed - pDt / 4.0);
+        } else if ((pCar->curvature > 0.0f || pCar->collision_info->omega.v[1] > 0.001) && pCar->turn_speed == 0.0f) {
+            pCar->turn_speed = (float)(25.0f * pDt * (0.05 / (5.0 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) * -1.0);
+            if (pCar->collision_info->omega.v[1] < -0.01) {
+                pCar->turn_speed = (float)(pCar->turn_speed - pDt * pCar->collision_info->omega.v[1] / 4.0);
+            }
+        } else {
+            pCar->turn_speed = (float)(pCar->turn_speed - 25.0f * pDt * (0.05 / (5.00 + WORLD_SCALE_D * BrVector3Length(&pCar->collision_info->v))) / 4.0);
+        }
+    }
+    if (!pCar->keys.left && !pCar->keys.right) {
+        pCar->turn_speed = 0.0f;
+    } else if (fabs(pCar->turn_speed) < fabs(2.0f * pDt * pCar->curvature) && pCar->curvature * pCar->turn_speed < 0.0f) {
+        pCar->turn_speed = -(2.0f * pDt * pCar->curvature);
+    }
+    pCar->curvature += pCar->turn_speed;
+    if (pCar->joystick.left > 0) {
+        pCar->curvature = (float)pCar->joystick.left * (float)pCar->joystick.left / (float)UINT_MAX * pCar->maxcurve;
+    } else if (pCar->joystick.right >= 0) {
+        pCar->curvature = -((float)pCar->joystick.right * (float)pCar->joystick.right / (float)UINT_MAX) * pCar->maxcurve;
+    }
+    if (pCar->curvature > pCar->maxcurve) {
+        pCar->curvature = pCar->maxcurve;
+    }
+    if (pCar->curvature < -pCar->maxcurve) {
+        pCar->curvature = -pCar->maxcurve;
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x00417a20
 // FUNCTION: CARMA2_SW 0x00417a50
+// FUNCTION: CARMA2_CHEAT 0x00417c80
 void C2_HOOK_FASTCALL ControlCar5(tCar_spec* pCar, br_scalar pDt) {
     br_scalar time_steps;
 
@@ -1097,7 +1153,42 @@ void C2_HOOK_FASTCALL ControlCar5(tCar_spec* pCar, br_scalar pDt) {
     pCar->keys.left = 1;
 }
 
-// ControlCar1
+// FUNCTION: CARMA2_HW 0x00417de0
+// FUNCTION: CARMA2_SW 0x00417e10
+// FUNCTION: CARMA2_CHEAT 0x00418040
+void C2_HOOK_FASTCALL ControlCar1(tCar_spec* pCar, br_scalar pDt) {
+    br_scalar time_steps;
+
+    pCar->acc_force = 0.0f;
+    if (pCar->keys.acc) {
+        pCar->acc_force = 7.0f * pCar->collision_info->M;
+    }
+    if (pCar->keys.dec) {
+        pCar->acc_force = -(7.0f * pCar->collision_info->M);
+    }
+    if (pCar->keys.left) {
+        if (pCar->curvature < 0.0f) {
+            pCar->curvature = (float)(pCar->curvature + pDt * 0.25);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature + time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))));
+        }
+    }
+    if (pCar->keys.right) {
+        if (pCar->curvature > 0.0f) {
+            pCar->curvature = (float)(pCar->curvature - pDt * 0.25);
+        } else {
+            time_steps = pDt / 0.04f;
+            pCar->curvature = (float)(pCar->curvature - time_steps * (0.05f / (5.0f + BrVector3Length(&pCar->collision_info->v))));
+        }
+    }
+    if (pCar->curvature > pCar->maxcurve) {
+        pCar->curvature = pCar->maxcurve;
+    }
+    if (pCar->curvature < -pCar->maxcurve) {
+        pCar->curvature = -pCar->maxcurve;
+    }
+}
 
 // SteeringSelfCentre
 
