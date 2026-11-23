@@ -1416,12 +1416,34 @@ void C2_HOOK_FASTCALL MakeCarIt(tCar_spec* pCar) {
 #pragma auto_inline(off)
 #endif
 
-// STUB: CARMA2_HW 0x004fe570
+// FUNCTION: CARMA2_HW 0x004fe570
+// FUNCTION: CARMA2_CHEAT 0x00504210
 // STUB: CARMA2_SW 0x004f9d90
-// STUB: CARMA2_CHEAT 0x00504210
 void C2_HOOK_FASTCALL StopCarBeingIt(tCar_spec* pCar) {
-    NOT_IMPLEMENTED();
+    tCar_crush_spec* crush_spec;
+    tUser_crush_data* user_crush_data;
+    br_model* model;
+    int i;
+
+    if (gAFE) {
+        crush_spec = pCar->car_crush_spec;
+        ResetFoxModelCallback(pCar->shell_model);
+        user_crush_data = pCar->car_model_actor->user;
+        model = user_crush_data->models[1];
+        if (model != NULL) {
+            ResetFoxModelCallback(model);
+        }
+        DRActorEnumRecurse(pCar->car_model_actor, ForEveryCarModelCB, ResetFoxModelCallback);
+        for (i = 0; i < crush_spec->field_0x270; i++) {
+            ResetFoxModelCallback(crush_spec->field_0x274[i].field_0x0->model);
+        }
+        for (i = 0; i < crush_spec->field_0x2b0; i++) {
+            ResetFoxModelCallback(crush_spec->field_0x2b4[i].field_0x0->model);
+        }
+        ForEveryCarMaterial(pCar, ResetFoxLighting, 1);
+    }
 }
+
 
 #ifdef REC2_MATCHING
 #pragma auto_inline(on)
@@ -1515,6 +1537,7 @@ void C2_HOOK_FASTCALL ForEveryCarMaterial(tCar_spec* pCar_spec, tMaterialMaybeUp
 
 // FUNCTION: CARMA2_HW 0x004fec30
 // FUNCTION: CARMA2_SW 0x004fa510
+// FUNCTION: CARMA2_CHEAT 0x005048d0
 intptr_t C2_HOOK_CDECL ForEveryCarModelCB(br_actor* pActor, void* pContext) {
     tUser_crush_data* user_crush;
     int (C2_HOOK_FASTCALL* model_callback)(br_model*) = pContext;
