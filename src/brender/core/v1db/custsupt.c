@@ -262,6 +262,10 @@ br_scalar C2_HOOK_CDECL BrZsScreenZToDepth(br_scalar sz, br_camera* camera) {
     return depth;
 }
 
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
 // FUNCTION: CARMA2_HW 0x005273a0
 // FUNCTION: CARMA2_CHEAT 0x0052cf90
 br_scalar C2_HOOK_CDECL BrScreenZToCamera(br_actor* camera, br_scalar sz) {
@@ -287,6 +291,10 @@ br_scalar C2_HOOK_CDECL BrScreenZToCamera(br_actor* camera, br_scalar sz) {
         return 0.f;
     }
 }
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
+
 
 // FUNCTION: CARMA2_HW 0x00527480
 // FUNCTION: CARMA2_CHEAT 0x0052d070
