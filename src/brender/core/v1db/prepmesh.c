@@ -656,31 +656,26 @@ int C2_HOOK_STDCALL IsMaterialTransparent(const br_material* material) {
     if (material->colour_map != NULL) {
         br_uint_8 type = material->colour_map->type;
 
-        switch (type) {
-        case BR_PMT_ALPHA_8:
-        case BR_PMT_INDEXA_88:
-        case BR_PMT_RGBA_4444:
-        case BR_PMT_ALPHA_4:
-        case BR_PMT_INDEXA_44:
-        case BR_PMT_DEPTH_15:
-        case BR_PMT_ARGB_1555:
-            return 1;
-        }
-        if (material->index_blend != NULL) {
-            return 1;
+        if (type == BR_PMT_ALPHA_8 || type == BR_PMT_INDEXA_88 || type == BR_PMT_RGBA_4444 || type == BR_PMT_ALPHA_4 || type == BR_PMT_INDEXA_44 || type == BR_PMT_DEPTH_15 || type == BR_PMT_ARGB_1555) {
+            goto transparent;
         }
     }
-
+    if (material->index_blend != NULL) {
+        goto transparent;
+    }
     tvp = material->extra_prim;
     if (tvp != NULL) {
-        while (tvp->t != BR_NULL_TOKEN) {
-            if (tvp->t == BRT_OPACITY_X || tvp->t == BRT_OPACITY_F) {
-                return 1;
-            }
+        while (tvp->t != BR_NULL_TOKEN && tvp->t != BRT_OPACITY_X && tvp->t != BRT_OPACITY_F) {
             tvp++;
         }
+        if (tvp->t == BR_NULL_TOKEN) {
+            return 0;
+        }
+        goto transparent;
     }
     return 0;
+transparent:
+    return 1;
 }
 
 // FUNCTION: CARMA2_HW 0x0051f6a0
