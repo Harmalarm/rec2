@@ -320,40 +320,40 @@ int C2_HOOK_STDCALL DfTopType(void) {
 int C2_HOOK_STDCALL TextReadLine(br_datafile* df, char** ident, char** data) {
     char* cp;
 
-    while (1) {
-        cp = BrScratchString();
-        BrFileGetLine(cp, 256, df->h);
-        if (BrFileEof(df->h) != 0) {
-            return 0;
+    BrFileGetLine(BrScratchString(), 256, df->h);
+    while (BrFileEof(df->h) == 0) {
+        for (cp = BrScratchString(); (*cp == ' ') || (*cp == '\t'); cp++) {
         }
-        for (; (*cp == ' ') || (*cp == '\t'); cp++) {
-        }
-        if (*cp != '\0')
-            break;
-    }
-    *ident = cp;
-    while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
-        cp++;
-    }
-    *cp = '\0';
-    cp++;
-    while ((*cp == ' ') || (*cp == '\t')) {
-        cp++;
-    }
-    *data = cp;
-    if (*cp == '\"') {
-        cp++;
-        while ((*cp != '\0') && (*cp != '\"')) {
+        if (*cp != '\0') {
+            *ident = cp;
+            while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
+                cp++;
+            }
+            *cp = '\0';
             cp++;
+            while ((*cp == ' ') || (*cp == '\t')) {
+                cp++;
+            }
+            *data = cp;
+            if (*cp == '\"') {
+                cp++;
+                while ((*cp != '\"') && (*cp != '\0')) {
+                    cp++;
+                }
+            } else {
+                while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
+                    cp++;
+                }
+            }
+            *cp = '\0';
+            return 1;
         }
-    } else {
-        while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
-            cp++;
-        }
+        BrFileGetLine(BrScratchString(), 256, df->h);
     }
-    *cp = '\0';
-    return 1;
+    return 0;
 }
+
+
 
 br_uint_16 C2_HOOK_STDCALL scalarTypeConvert(br_datafile* df, br_uint_16 t) {
 
