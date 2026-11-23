@@ -1553,6 +1553,10 @@ void C2_HOOK_FASTCALL PDInitJoysticks(void) {
     ResetForceFeedback();
 }
 
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
 // FUNCTION: CARMA2_HW 0x00457eb0
 // FUNCTION: CARMA2_SW 0x00457c40
 // FUNCTION: CARMA2_CHEAT 0x00458330
@@ -1564,6 +1568,10 @@ void C2_HOOK_FASTCALL StartDinputEffect(int pIndex) {
         IDirectInputEffect_Start(effect, 1, DIES_NODOWNLOAD);
     }
 }
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // FUNCTION: CARMA2_HW 0x00457ed0
 // FUNCTION: CARMA2_SW 0x00457c60
@@ -1603,7 +1611,12 @@ int C2_HOOK_FASTCALL PDDisableJoysticks(void) {
     return gCountEnumeratedJoystickDinputDevices;
 }
 
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
 // FUNCTION: CARMA2_HW 0x004580e0
+// FUNCTION: CARMA2_SW 0x00457e70
 // FUNCTION: CARMA2_CHEAT 0x00458560
 int C2_HOOK_FASTCALL PDFindJoystickEffect(const char* effectName) {
     int i;
@@ -1616,6 +1629,10 @@ int C2_HOOK_FASTCALL PDFindJoystickEffect(const char* effectName) {
     }
     return -1;
 }
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // FUNCTION: CARMA2_HW 0x0045c720
 // FUNCTION: CARMA2_SW 0x0045c160
