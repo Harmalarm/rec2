@@ -1508,13 +1508,17 @@ void C2_HOOK_FASTCALL PDMouseButtons(int *pLeftButtonDown, int *pRightButtonDown
     }
 }
 
+#if defined(REC2_MATCHING) && defined(_MSC_VER)
+#pragma optimize("", off)
+#endif
+
 // FUNCTION: CARMA2_HW 0x0056a3a9
 // FUNCTION: CARMA2_CHEAT 0x0056ff91
 void C2_HOOK_FASTCALL PDExtractFilename(char *pDest, const char *pPath) {
-    char dirname[256];
     char drive[4];
     char filename[256];
     char extension[256];
+    char dirname[256];
 
     _splitpath(pPath, drive, dirname, filename, extension);
     sprintf(pDest, "%s%s", filename, extension);
@@ -1522,14 +1526,18 @@ void C2_HOOK_FASTCALL PDExtractFilename(char *pDest, const char *pPath) {
 
 // FUNCTION: CARMA2_HW 0x0056a349
 void C2_HOOK_FASTCALL PDExtractDirectory(char *pDest, const char *pPath) {
-    char dirname[256];
     char drive[4];
     char filename[256];
     char extension[256];
+    char dirname[256];
 
     _splitpath(pPath, drive, dirname, filename, extension);
     sprintf(pDest, "%s%s", drive, dirname);
 }
+
+#if defined(REC2_MATCHING) && defined(_MSC_VER)
+#pragma optimize("", on)
+#endif
 
 // FUNCTION: CARMA2_HW 0x004928a0
 void C2_HOOK_FASTCALL PDPageInMemory(void *pMemory) {
