@@ -10,6 +10,7 @@
 #define GUARD_68_TIMER_H
 
 #include "c2_hooks.h"
+#include "platform.h"
 #include "rec2_types.h"
 
 #define TIMER_MNG 0
@@ -31,6 +32,39 @@
 #define TIMER_REC 16
 #define TIMER_SER 17
 #define TIMER_OQQ 18
+
+extern tTimer gTimers[19];
+
+extern int gTimers_stack[8];
+
+extern int gTimers_max_index;
+
+extern int gTimers_stack_size;
+
+static inline void Timers_Push(int pType) {
+    int prev_type;
+
+    gTimers_stack[gTimers_stack_size] = pType;
+    if (gTimers_stack_size != 0) {
+        prev_type = gTimers_stack[gTimers_stack_size - 1];
+    } else {
+        prev_type = gTimers_max_index;
+    }
+    gTimers[prev_type].durations[gTimers[prev_type].index] += PDGetMicroseconds() - gTimers[prev_type].start_time;
+    gTimers[pType].start_time = PDGetMicroseconds();
+    gTimers_stack_size += 1;
+}
+
+static inline void Timers_Pop(int pType) {
+
+    gTimers[pType].durations[gTimers[pType].index] += PDGetMicroseconds() - gTimers[pType].start_time;
+    if (gTimers_stack_size > 1) {
+        gTimers[gTimers_stack[gTimers_stack_size - 1]].start_time = PDGetMicroseconds();
+    } else {
+        gTimers[gTimers_max_index].start_time = PDGetMicroseconds();
+    }
+    gTimers_stack_size -= 1;
+}
 
 extern void C2_HOOK_FASTCALL Timers_Init(void);
 
