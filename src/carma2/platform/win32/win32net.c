@@ -136,19 +136,20 @@ void C2_HOOK_FASTCALL NetNowIPXLocalTarget2String(char* pString, struct sockaddr
 
     sprintf(pString,
         "%2.2x%2.2x%2.2x%2.2x:%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x,%2.2x%2.2x",
-        pSock_addr->sa_data[0],
-        pSock_addr->sa_data[1],
-        pSock_addr->sa_data[2],
-        pSock_addr->sa_data[3],
-        pSock_addr->sa_data[4],
-        pSock_addr->sa_data[5],
-        pSock_addr->sa_data[6],
-        pSock_addr->sa_data[7],
-        pSock_addr->sa_data[8],
-        pSock_addr->sa_data[9],
-        pSock_addr->sa_data[10],
-        pSock_addr->sa_data[11]);
+        (tU8)pSock_addr->sa_data[0],
+        (tU8)pSock_addr->sa_data[1],
+        (tU8)pSock_addr->sa_data[2],
+        (tU8)pSock_addr->sa_data[3],
+        (tU8)pSock_addr->sa_data[4],
+        (tU8)pSock_addr->sa_data[5],
+        (tU8)pSock_addr->sa_data[6],
+        (tU8)pSock_addr->sa_data[7],
+        (tU8)pSock_addr->sa_data[8],
+        (tU8)pSock_addr->sa_data[9],
+        (tU8)pSock_addr->sa_data[10],
+        (tU8)pSock_addr->sa_data[11]);
 }
+
 
 // FUNCTION: CARMA2_HW 0x00519560
 // FUNCTION: CARMA2_SW 0x00513040
