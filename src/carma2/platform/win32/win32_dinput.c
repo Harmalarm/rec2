@@ -85,6 +85,7 @@ int gDirectInputJoystickEnumerated;
 
 // GLOBAL: CARMA2_HW 0x0079d9c0
 // GLOBAL: CARMA2_SW 0x00793f20
+// GLOBAL: CARMA2_CHEAT 0x007a5060
 tDirectInputJoystickInfo gDirectInputJoystickInfos[MAX_COUNT_JOYSTICKS];
 
 // GLOBAL: CARMA2_HW 0x00684628
@@ -462,15 +463,25 @@ size_t C2_HOOK_FASTCALL GetCurrentJoystickCountButtons(void) {
     return gDirectInputJoystickInfos[gJoystick_index].count_buttons;
 }
 
+#ifdef REC2_MATCHING
+#pragma auto_inline(off)
+#endif
+
 // FUNCTION: CARMA2_HW 0x00459f80
 // FUNCTION: CARMA2_SW 0x00459d10
 // FUNCTION: CARMA2_CHEAT 0x0045a400
 tButtonJoystickInfo* C2_HOOK_FASTCALL PDGetCurrentJoystickData(void) {
-    if (gJoystick_index == -1) {
-        return NULL;
+    if (gJoystick_index != -1) {
+        if (gDirectInputJoystickInfos[gJoystick_index].data != NULL) {
+            return gDirectInputJoystickInfos[gJoystick_index].data;
+        }
     }
-    return gDirectInputJoystickInfos[gJoystick_index].data;
+    return NULL;
 }
+
+#ifdef REC2_MATCHING
+#pragma auto_inline(on)
+#endif
 
 // FUNCTION: CARMA2_HW 0x00459fd0
 // FUNCTION: CARMA2_SW 0x00459d60
@@ -1638,8 +1649,8 @@ int C2_HOOK_FASTCALL PDIsJoystickDPadEnabled(void) {
     tButtonJoystickInfo* joystick_info;
 
     joystick_info = PDGetCurrentJoystickData();
-    if (joystick_info == NULL) {
-        return 0;
+    if (joystick_info != NULL) {
+        return joystick_info->field_0xe0;
     }
-    return joystick_info->field_0xe0;
+    return 0;
 }
