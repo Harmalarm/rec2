@@ -235,6 +235,8 @@ static uint16_t fast_rsqrt_table[192] = {
 };
 
 // FUNCTION: CARMA2_HW 0x00537110
+// FUNCTION: CARMA2_SW 0x005327b0
+// FUNCTION: CARMA2_CHEAT 0x0053cd00
 br_fixed_ls BR_NAKED C2_HOOK_CDECL BrFixedAbs(br_fixed_ls a) {
 #ifndef REC2_MATCHING
     if (a < 0) {
@@ -259,6 +261,7 @@ br_fixed_ls BR_NAKED C2_HOOK_CDECL BrFixedAbs(br_fixed_ls a) {
 }
 
 // FUNCTION: CARMA2_HW 0x00537120
+// FUNCTION: CARMA2_SW 0x005327c0
 // FUNCTION: CARMA2_CHEAT 0x0053cd10
 br_fixed_ls BR_NAKED C2_HOOK_CDECL BrFixedMul(br_fixed_ls a, br_fixed_ls b) {
 #ifndef REC2_MATCHING
