@@ -874,8 +874,8 @@ int C2_HOOK_FASTCALL PDGetMicroseconds(void) {
         DWORDLONG count;
 
         QueryPerformanceCounter(&perfCountValue);
-        count = Int64ShllMod32(Int64ShllMod32((LONGLONG)perfCountValue.HighPart, 16), 16) + perfCountValue.LowPart;
-        count = (count - gPerformanceCounterStart.QuadPart) / (DWORDLONG)gPerformanceCounterFrequency_us.QuadPart;
+        count = Int64ShllMod32(Int64ShllMod32(perfCountValue.HighPart, 16), 16) + perfCountValue.LowPart;
+        count = (count - gPerformanceCounterStart.QuadPart) / gPerformanceCounterFrequency_us.QuadPart;
         return (int)count;
     }
     return 0;
