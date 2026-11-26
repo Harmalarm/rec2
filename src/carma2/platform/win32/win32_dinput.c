@@ -1166,6 +1166,8 @@ void C2_HOOK_FASTCALL Win32InitInputDevice(void) {
 }
 
 // FUNCTION: CARMA2_HW 0x00459690
+// FUNCTION: CARMA2_SW 0x00459420
+// FUNCTION: CARMA2_CHEAT 0x00459b10
 tU32 C2_HOOK_FASTCALL PDGetJoystickButtonStates(void) {
     IDirectInputDevice2 *device;
     HRESULT res;
@@ -1219,7 +1221,7 @@ tU32 C2_HOOK_FASTCALL PDGetJoystickButtonStates(void) {
 // FUNCTION: CARMA2_SW 0x0045ade0
 // FUNCTION: CARMA2_CHEAT 0x0045b7e0
 void C2_HOOK_FASTCALL PDSetKeysFromJoystick(int *keys) {
-    if (gJoystick_index != 1) {
+    if (gJoystick_index != -1) {
         tU32 button_mask;
 
         button_mask = PDGetJoystickButtonStates();
@@ -1227,7 +1229,11 @@ void C2_HOOK_FASTCALL PDSetKeysFromJoystick(int *keys) {
             int i;
 
             for (i = 0; i < 32; i++) {
-                keys[107 + i] = !!(button_mask & (i << i));
+                if (button_mask & (1 << i)) {
+                    keys[107 + i] = 1;
+                } else {
+                    keys[107 + i] = 0;
+                }
             }
         }
     }
