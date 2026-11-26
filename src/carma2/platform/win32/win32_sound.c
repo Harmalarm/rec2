@@ -73,10 +73,12 @@ int gPDS3_cda_track;
 
 // GLOBAL: CARMA2_HW 0x007a0520
 // GLOBAL: CARMA2_SW 0x00796ac0
+// GLOBAL: CARMA2_CHEAT 0x007a7bc0
 MCI_STATUS_PARMS gPDS3_cda_status_parms;
 
 // GLOBAL: CARMA2_HW 0x007a00ac
 // GLOBAL: CARMA2_SW 0x0079664c
+// GLOBAL: CARMA2_CHEAT 0x007a774c
 int gPDS3_Number_of_tracks;
 
 // GLOBAL: CARMA2_HW 0x007a0070
@@ -275,6 +277,7 @@ int C2_HOOK_FASTCALL PDS3StopMidiChannel(tS3_channel* pChannel) {
 
 // FUNCTION: CARMA2_HW 0x0056a0e1
 // FUNCTION: CARMA2_SW 0x00565781
+// FUNCTION: CARMA2_CHEAT 0x0056fcd2
 void C2_HOOK_FASTCALL PDS3CheckCDAMedia(void) {
     gPDS3_cda_status_parms.dwItem = MCI_STATUS_MEDIA_PRESENT;
     mciSendCommandA(gPDS3_mci_open_parms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_WAIT, (DWORD_PTR)&gPDS3_cda_status_parms);

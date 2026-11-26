@@ -1052,6 +1052,7 @@ int C2_HOOK_FASTCALL S3StopMIDIChannel(tS3_channel* pChannel) {
 
 // FUNCTION: CARMA2_HW 0x00565c22
 // FUNCTION: CARMA2_SW 0x005612c2
+// FUNCTION: CARMA2_CHEAT 0x0056b812
 int C2_HOOK_FASTCALL S3StopCDAInternal(void) {
 
     if (gS3_CDA_enabled) {
