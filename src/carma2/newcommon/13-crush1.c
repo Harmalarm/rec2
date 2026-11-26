@@ -1754,15 +1754,14 @@ void C2_HOOK_FASTCALL MungeDetachLists(tCar_crush_spec* pCar_crush) {
 
     new_count = 0;
     for (i = 0; i < pCar_crush->field_0x2b0; i++) {
-        bit = &pCar_crush->field_0x2b4[i];
-        switch (bit->field_0xc[10]) {
+        switch (pCar_crush->field_0x2b4[i].field_0xc[10]) {
         case 1:
-            pCar_crush->field_0x274[pCar_crush->field_0x270] = *bit;
+            pCar_crush->field_0x274[pCar_crush->field_0x270] = pCar_crush->field_0x2b4[i];
             pCar_crush->field_0x270++;
             break;
         case 2:
             if (new_count != i) {
-                pCar_crush->field_0x2b4[new_count] = *bit;
+                pCar_crush->field_0x2b4[new_count] = pCar_crush->field_0x2b4[i];
             }
             new_count++;
             break;
