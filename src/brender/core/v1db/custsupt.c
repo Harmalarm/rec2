@@ -321,25 +321,25 @@ void C2_HOOK_CDECL BrScreenXYZToCamera(br_vector3* point, br_actor* camera, br_p
     br_camera* data;
     br_angle fov;
     br_scalar scale;
-
+    br_scalar sw;
+    br_scalar sh;
 
     data = camera->type_data;
-
     vz = BrScreenZToCamera(camera, sz);
-
-    hx = (float)(screen_buffer->width - 2 * (x + screen_buffer->origin_x)) / (float)screen_buffer->width;
-    hy = (float)(2 * (y + screen_buffer->origin_y) - screen_buffer->height) / (float)screen_buffer->height;
-
+    sw = screen_buffer->width;
+    sh = screen_buffer->height;
+    hx = (br_scalar)(screen_buffer->width - 2 * (x + screen_buffer->origin_x)) / sw;
+    hy = (br_scalar)(2 * (y + screen_buffer->origin_y) - screen_buffer->height) / sh;
     switch (data->type) {
     case BR_CAMERA_PARALLEL:
-        point->v[0] = -0.5f * hx * data->width * data->aspect;
-        point->v[1] = -0.5f * hy * data->height / 2;
+        point->v[0] = (-hx) * (data->width * data->aspect) / 2.0f;
+        point->v[1] = (-hy) * data->height / 2.0f;
         point->v[2] = vz;
         break;
     case BR_CAMERA_PERSPECTIVE_FOV:
-        fov=(br_angle)(data->field_of_view / 2);
+        fov = (br_angle)(data->field_of_view / 2);
         scale = BR_COS(fov) / BR_SIN(fov);
-        point->v[0] = hx * data->aspect * vz / scale;
+        point->v[0] = vz * (hx * data->aspect) / scale;
         point->v[1] = hy * vz / scale;
         point->v[2] = vz;
         break;
