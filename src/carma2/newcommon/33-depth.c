@@ -526,15 +526,15 @@ void C2_HOOK_FASTCALL DoWobbleCamera(br_actor* pCamera) {
     static float period22 = 3900.f;
 
     f_time = (float)GetTotalTime();
-    pCamera->t.t.mat.m[0][0] += FastScalarSin((int)fmod(f_time / period00 * 360.f, 360.f)) * mag00;
-    pCamera->t.t.mat.m[0][1] += FastScalarSin((int)fmod(f_time / period01 * 360.f, 360.f)) * mag01;
-    pCamera->t.t.mat.m[0][2] += FastScalarSin((int)fmod(f_time / period02 * 360.f, 360.f)) * mag02;
-    pCamera->t.t.mat.m[1][0] += FastScalarSin((int)fmod(f_time / period10 * 360.f, 360.f)) * mag10;
-    pCamera->t.t.mat.m[1][1] += FastScalarSin((int)fmod(f_time / period11 * 360.f, 360.f)) * mag11;
-    pCamera->t.t.mat.m[1][2] += FastScalarSin((int)fmod(f_time / period12 * 360.f, 360.f)) * mag12;
-    pCamera->t.t.mat.m[2][0] += FastScalarSin((int)fmod(f_time / period20 * 360.f, 360.f)) * mag20;
-    pCamera->t.t.mat.m[2][1] += FastScalarSin((int)fmod(f_time / period21 * 360.f, 360.f)) * mag21;
-    pCamera->t.t.mat.m[2][2] += FastScalarSin((int)fmod(f_time / period22 * 360.f, 360.f)) * mag22;
+    pCamera->t.t.mat.m[0][0] += FastScalarSin((int)fmod(360.0f * (f_time / period00), 360.0f)) * mag00;
+    pCamera->t.t.mat.m[0][1] += FastScalarSin((int)fmod(360.0f * (f_time / period01), 360.0f)) * mag01;
+    pCamera->t.t.mat.m[0][2] += FastScalarSin((int)fmod(360.0f * (f_time / period02), 360.0f)) * mag02;
+    pCamera->t.t.mat.m[1][0] += FastScalarSin((int)fmod(360.0f * (f_time / period10), 360.0f)) * mag10;
+    pCamera->t.t.mat.m[1][1] += FastScalarSin((int)fmod(360.0f * (f_time / period11), 360.0f)) * mag11;
+    pCamera->t.t.mat.m[1][2] += FastScalarSin((int)fmod(360.0f * (f_time / period12), 360.0f)) * mag12;
+    pCamera->t.t.mat.m[2][0] += FastScalarSin((int)fmod(360.0f * (f_time / period20), 360.0f)) * mag20;
+    pCamera->t.t.mat.m[2][1] += FastScalarSin((int)fmod(360.0f * (f_time / period21), 360.0f)) * mag21;
+    pCamera->t.t.mat.m[2][2] += FastScalarSin((int)fmod(360.0f * (f_time / period22), 360.0f)) * mag22;
 }
 
 #ifdef REC2_MATCHING
