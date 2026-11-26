@@ -128,11 +128,12 @@ int C2_HOOK_FASTCALL StartSavedGamesList(void) {
         gCount_saved_games = size / sizeof(tSave_game);
         gSaved_games = BrMemAllocate(size, kMem_misc);
         PFfread(gSaved_games, 1, size, f);
-        SplungeSomeData(gSaved_games, gCount_saved_games * sizeof(tSave_game));
+        Encryptificate(gSaved_games, gCount_saved_games);
         PFfclose(f);
         return gCount_saved_games;
+    } else {
+        return 0;
     }
-    return 0;
 }
 
 // FUNCTION: CARMA2_HW 0x00491c90
