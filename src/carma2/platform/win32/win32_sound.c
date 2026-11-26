@@ -19,14 +19,17 @@ LPDIRECTSOUND gDirectSound;
 
 // GLOBAL: CARMA2_HW 0x006b2d9c
 // GLOBAL: CARMA2_SW 0x006ac524
+// GLOBAL: CARMA2_CHEAT 0x006ba42c
 LPDIRECTSOUND gPD_S3_direct_sound;
 
 // GLOBAL: CARMA2_HW 0x007a00e0
 // GLOBAL: CARMA2_SW 0x00796680
+// GLOBAL: CARMA2_CHEAT 0x007a7780
 int gPDS3_volume_factors[256];
 
 // GLOBAL: CARMA2_HW 0x007a0080
 // GLOBAL: CARMA2_SW 0x00796620
+// GLOBAL: CARMA2_CHEAT 0x007a7720
 tPD_S3_config gPD_S3_config;
 
 // GLOBAL: CARMA2_HW 0x007a0500
@@ -39,6 +42,7 @@ MCI_SET_PARMS gPDS3_mci_set_parms;
 
 // GLOBAL: CARMA2_HW 0x006b2d98
 // GLOBAL: CARMA2_SW 0x006ac520
+// GLOBAL: CARMA2_CHEAT 0x006ba428
 int gPDS3_cda_initialized;
 
 // GLOBAL: CARMA2_HW 0x006b2da0
@@ -87,6 +91,7 @@ MCI_STATUS_PARMS gPDS3_mci_midi_status_parms;
 
 // GLOBAL: CARMA2_HW 0x006b2dc4
 // GLOBAL: CARMA2_SW 0x006ac54c
+// GLOBAL: CARMA2_CHEAT 0x006ba454
 tU32 gPDS3_last_cda_status_update;
 
 #ifdef REC2_SW
@@ -105,6 +110,7 @@ MCIERROR (C2_HOOK_STDCALL * mciSendCommandA_ptr)(MCIDEVICEID mciId, UINT uMsg, D
 
 // FUNCTION: CARMA2_HW 0x0056992f
 // FUNCTION: CARMA2_SW 0x00564fcf
+// FUNCTION: CARMA2_CHEAT 0x0056f520
 int C2_HOOK_FASTCALL PDS3Init(void) {
 
     C2_HOOK_BUG_ON(sizeof(gPD_S3_config) != 0x20);
@@ -125,12 +131,14 @@ int C2_HOOK_FASTCALL PDS3Init(void) {
 
 // FUNCTION: CARMA2_HW 0x005699a3
 // FUNCTION: CARMA2_SW 0x00565043
+// FUNCTION: CARMA2_CHEAT 0x0056f594
 int C2_HOOK_FASTCALL FUN_005699a3(void) {
     return 0;
 }
 
 // FUNCTION: CARMA2_HW 0x00569a2c
 // FUNCTION: CARMA2_SW 0x005650cc
+// FUNCTION: CARMA2_CHEAT 0x0056f61d
 int C2_HOOK_FASTCALL PDS3DDXInit(void) {
 #ifdef DSOUND_ENABLED
     int i;
@@ -154,6 +162,7 @@ int C2_HOOK_FASTCALL PDS3DDXInit(void) {
 
 // FUNCTION: CARMA2_HW 0x005699aa
 // FUNCTION: CARMA2_SW 0x0056504a
+// FUNCTION: CARMA2_CHEAT 0x0056f59b
 int C2_HOOK_FASTCALL PDS3InitCDA(void) {
 
     gPDS3_mci_open_parms.lpstrDeviceType = (LPCSTR)(uintptr_t)MCI_DEVTYPE_CD_AUDIO;
@@ -426,6 +435,7 @@ int C2_HOOK_FASTCALL FUN_00569b29(void) {
 
 // FUNCTION: CARMA2_HW 0x00569f1b
 // FUNCTION: CARMA2_SW 0x005655bb
+// FUNCTION: CARMA2_CHEAT 0x0056fb0c
 int C2_HOOK_FASTCALL PDS3IsMIDIStopped(tS3_channel *pChannel) {
     MCIDEVICEID device;
 
@@ -454,6 +464,7 @@ int C2_HOOK_FASTCALL FUN_00569f85(tS3_channel* pChannel) {
 
 // FUNCTION: CARMA2_HW 0x0056a260
 // FUNCTION: CARMA2_SW 0x00565900
+// FUNCTION: CARMA2_CHEAT 0x0056fe51
 int C2_HOOK_FASTCALL PDS3IsCDAPlaying(void) {
 
     if (gS3_CDA_enabled && gPDS3_cda_media_present) {
@@ -587,9 +598,7 @@ void C2_HOOK_FASTCALL PDS3ServiceCDA(tS32 pDelta_time) {
         c = o->channel_list;
         for (; c != NULL; c = c->next) {
             S3ServiceChannel(c);
-            ;
         }
-
     }
 
     if (gPDS3_cda_initialized) {
