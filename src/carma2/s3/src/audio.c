@@ -35,6 +35,7 @@ int gS3_enabled;
 
 // GLOBAL: CARMA2_HW 0x00673504
 // GLOBAL: CARMA2_SW 0x0066dc94
+// GLOBAL: CARMA2_CHEAT 0x0067adb4
 int gS3_CDA_enabled = 1;
 
 // GLOBAL: CARMA2_HW 0x007a0554
@@ -1070,6 +1071,7 @@ int C2_HOOK_FASTCALL S3StopCDAInternal(void) {
 
 // FUNCTION: CARMA2_HW 0x00565bfe
 // FUNCTION: CARMA2_SW 0x0056129e
+// FUNCTION: CARMA2_CHEAT 0x0056b7ee
 int C2_HOOK_FASTCALL S3StopCDAChannel(tS3_channel* pChannel) {
     int result;
 
