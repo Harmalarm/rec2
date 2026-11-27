@@ -33,6 +33,7 @@
 #include "70-packfile.h"
 #include "globvars.h"
 #include "globvrkm.h"
+#include "platform.h"
 
 #include "rec2_macros.h"
 
