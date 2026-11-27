@@ -639,9 +639,27 @@ void C2_HOOK_FASTCALL RemoveTransientBitmaps(int pGraphically_remove_them) {
 #pragma auto_inline(on)
 #endif
 
-// SaveTransient
+inline void C2_HOOK_FASTCALL SaveTransient(int pIndex, int pX_coord, int pY_coord) {
+
+    if (!gNoTransients) {
+
+        gTransient_bitmaps[pIndex].x_coord = pX_coord & ~3;
+        gTransient_bitmaps[pIndex].y_coord = pY_coord;
+        gTransient_bitmaps[pIndex].in_use = 1;
+        gTransient_bitmaps[pIndex].order_number = gNext_transient;
+        gNext_transient += 1;
+        BrPixelmapRectangleCopy(gTransient_bitmaps[pIndex].pixmap,
+            0, 0,
+            gBack_screen,
+            gTransient_bitmaps[pIndex].x_coord,
+            gTransient_bitmaps[pIndex].y_coord,
+            gTransient_bitmaps[pIndex].pixmap->width,
+            gTransient_bitmaps[pIndex].pixmap->height);
+    }
+}
 
 // FUNCTION: CARMA2_HW 0x0043e0a0
+// FUNCTION: CARMA2_SW 0x0043e0f0
 // FUNCTION: CARMA2_CHEAT 0x0043e350
 int C2_HOOK_FASTCALL DoMouseCursor(void) {
     int delta_time;
@@ -652,25 +670,31 @@ int C2_HOOK_FASTCALL DoMouseCursor(void) {
     int pos_x, pos_y;
 
     // GLOBAL: CARMA2_HW 0x0067c398
+    // GLOBAL: CARMA2_SW 0x00676b0c
     // GLOBAL: CARMA2_CHEAT 0x00683c48
     static tU32 last_call_time;
-
     // GLOBAL: CARMA2_HW 0x0067c39c
+    // GLOBAL: CARMA2_SW 0x00676b10
     // GLOBAL: CARMA2_CHEAT 0x00683c4c
     static tU32 last_required_change;
     // GLOBAL: CARMA2_HW 0x0067c3a0
+    // GLOBAL: CARMA2_SW 0x00676b14
     // GLOBAL: CARMA2_CHEAT 0x00683c50
     static int delta_x;
     // GLOBAL: CARMA2_HW 0x0067c3a4
+    // GLOBAL: CARMA2_SW 0x00676b18
     // GLOBAL: CARMA2_CHEAT 0x00683c54
     static int required_cursor;
     // GLOBAL: CARMA2_HW 0x0067c3a8
+    // GLOBAL: CARMA2_SW 0x00676b1c
     // GLOBAL: CARMA2_CHEAT 0x00683c58
     static int zero_count;
     // GLOBAL: CARMA2_HW 0x0067c3ac
+    // GLOBAL: CARMA2_SW 0x00676b20
     // GLOBAL: CARMA2_CHEAT 0x00683c5c
     static int button_was_down;
     // GLOBAL: CARMA2_HW 0x0058fddc
+    // GLOBAL: CARMA2_SW 0x00676b00
     // GLOBAL: CARMA2_CHEAT 0x00594f60
     static int draw_cursor = 1;
 
@@ -709,26 +733,17 @@ int C2_HOOK_FASTCALL DoMouseCursor(void) {
             required_cursor = new_required;
         }
         gCurrent_cursor_index = 2;
-        if (!gNoTransients) {
-            br_pixelmap *map;
-            int idx = gCursor_transient_index;
-
-            gTransient_bitmaps[idx].x_coord = (pos_x - 7) & ~3;
-            gTransient_bitmaps[idx].y_coord = pos_y - 7;
-            gTransient_bitmaps[idx].in_use = 1;
-            gTransient_bitmaps[idx].order_number = gNext_transient;
-            gNext_transient += 1;
-            map = gTransient_bitmaps[idx].pixmap;
-            BrPixelmapRectangleCopy(map,
-                0, 0,
-                gBack_screen,
-                gTransient_bitmaps[idx].x_coord,
-                gTransient_bitmaps[idx].y_coord,
-                map->width,
-                map->height);
-        }
+        SaveTransient(gCursor_transient_index, pos_x - 7, pos_y - 7);
         switch (draw_cursor) {
         case 0:
+#ifdef REC2_SW
+            DRPixelmapRectangleMaskedCopy(gBack_screen,
+                pos_x - 7, pos_y - 7,
+                gCursors[gCurrent_cursor_index],
+                0, 0,
+                gCursors[gCurrent_cursor_index]->width,
+                gCursors[gCurrent_cursor_index]->height);
+#endif
             break;
         case 1:
 #ifdef REC2_HW
@@ -769,8 +784,8 @@ int C2_HOOK_FASTCALL DoMouseCursor(void) {
         }
     }
     last_call_time = time_now;
-    gMouse_last_y_coord = pos_y;
     gMouse_last_x_coord = pos_x;
+    gMouse_last_y_coord = pos_y;
     button_was_down = button_down;
     return mouse_moved;
 }
