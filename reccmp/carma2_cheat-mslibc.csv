@@ -234,5 +234,5 @@ address,type,name
 0x007a7f20,global,__nhandle
 0x007a7f24,global,__crtheap
 0x007a7f2c,global,__acmdln
-0x007a8f40,global,__nstream
 0x007a7f38,global,___piob
+0x007a8f40,global,__nstream
