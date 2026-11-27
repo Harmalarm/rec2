@@ -408,14 +408,12 @@ void C2_HOOK_FASTCALL EndPipingSession2(int pMunge_reentrancy) {
         }
         memcpy(gPipe_record_ptr, gLocal_buffer, gLocal_buffer_size);
         gPipe_record_ptr += gLocal_buffer_size;
-        if (gPipe_buffer_working_end < gPipe_record_ptr) {
+        if (gPipe_record_ptr > gPipe_buffer_working_end) {
             gPipe_buffer_working_end = gPipe_record_ptr;
         }
     }
-    if (pMunge_reentrancy) {
-        if (gReentrancy_count != 0) {
-            gReentrancy_count -= 1;
-        }
+    if (pMunge_reentrancy && gReentrancy_count != 0) {
+        gReentrancy_count -= 1;
         if (gReentrancy_count != 0) {
             StartPipingSession2(gReentrancy_array[gReentrancy_count - 1], 0);
         }
