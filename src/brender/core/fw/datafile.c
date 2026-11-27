@@ -19,6 +19,8 @@
 
 #include "c2_stdlib.h"
 
+#define ISSPACE(c) ((c)==' ' || (c)=='\t')
+
 // GLOBAL: CARMA2_HW 0x006673c8
 // GLOBAL: CARMA2_SW 0x006619a8
 // GLOBAL: CARMA2_CHEAT 0x0066ec80
@@ -318,42 +320,38 @@ int C2_HOOK_STDCALL DfTopType(void) {
 // FUNCTION: CARMA2_SW 0x005261c0
 // FUNCTION: CARMA2_CHEAT 0x00531220
 int C2_HOOK_STDCALL TextReadLine(br_datafile* df, char** ident, char** data) {
-    char* cp;
+    char *cp;
 
-    BrFileGetLine(BrScratchString(), 256, df->h);
-    while (BrFileEof(df->h) == 0) {
-        for (cp = BrScratchString(); (*cp == ' ') || (*cp == '\t'); cp++) {
-        }
-        if (*cp != '\0') {
-            *ident = cp;
-            while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
-                cp++;
-            }
-            *cp = '\0';
-            cp++;
-            while ((*cp == ' ') || (*cp == '\t')) {
-                cp++;
-            }
-            *data = cp;
-            if (*cp == '\"') {
-                cp++;
-                while ((*cp != '\"') && (*cp != '\0')) {
-                    cp++;
-                }
-            } else {
-                while ((*cp != ' ') && (*cp != '\t') && (*cp != '\0')) {
-                    cp++;
-                }
-            }
-            *cp = '\0';
-            return 1;
-        }
+    do {
         BrFileGetLine(BrScratchString(), 256, df->h);
+        if (BrFileEof(df->h)) {
+            return 0;
+        }
+        cp = BrScratchString();
+        while(ISSPACE(*cp))	cp++;
+    } while (*cp == '\0');
+    *ident = cp;
+    while (!ISSPACE(*cp) && *cp != '\0') {
+        cp++;
     }
-    return 0;
+    *cp++ = '\0';
+    while (ISSPACE(*cp)) {
+        cp++;
+    }
+    *data = cp;
+    if(*cp == '"') {
+        cp++;
+        while (*cp != '"' && *cp != '\0') {
+            cp++;
+        }
+    } else {
+        while (!ISSPACE(*cp) && *cp != '\0') {
+            cp++;
+        }
+    }
+    *cp = '\0';
+    return 1;
 }
-
-
 
 br_uint_16 C2_HOOK_STDCALL scalarTypeConvert(br_datafile* df, br_uint_16 t) {
 
