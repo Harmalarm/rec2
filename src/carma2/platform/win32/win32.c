@@ -952,49 +952,40 @@ int C2_HOOK_FASTCALL PDFileUnlock(const char *pThe_path) {
 // FUNCTION: CARMA2_HW 0x00486c30
 // FUNCTION: CARMA2_SW 0x00483d70
 // FUNCTION: CARMA2_CHEAT 0x00486f50
-void C2_HOOK_FASTCALL PDEnumPath(const char *path, tEnumPathCallback pCallback, void *data) {
+int C2_HOOK_FASTCALL PDEnumPath(const char *path, tEnumPathCallback pCallback, void *data) {
     char originalCurrentDirectory[MAX_PATH];
     tPath_name filePath;
-    BOOL bSucceeded;
     WIN32_FIND_DATAA findFileData;
     HANDLE hFindFile;
-    size_t lenFilename;
-    size_t lenLnk;
+    int lenFilename;
+    int lenLnk;
     const char* lnk;
     int callback_res;
 
-    GetCurrentDirectory(REC2_ASIZE(originalCurrentDirectory), originalCurrentDirectory);
-    bSucceeded = SetCurrentDirectoryA(path);
-    if (!bSucceeded) {
-        return;
-    }
-    hFindFile = FindFirstFileA("*.???", &findFileData);
-    if (hFindFile != INVALID_HANDLE_VALUE) {
-        while (1) {
-            if ((findFileData.dwFileAttributes & (
-                     FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0) {
-                lenFilename = strlen(findFileData.cFileName);
-                lnk = ".lnk";
-                lenLnk = strlen(lnk);
-                if (lenFilename >= lenLnk && PDstricmp(&findFileData.cFileName[lenFilename - lenLnk], ".lnk") == 0) {
-                    memmove(filePath, findFileData.cFileName, lenFilename - lenLnk);
-                    filePath[lenFilename - lenLnk] = '\0';
-                } else {
-                    memmove(filePath, findFileData.cFileName, lenFilename + 1);
+    callback_res = 0;
+    GetCurrentDirectoryA(REC2_ASIZE(originalCurrentDirectory), originalCurrentDirectory);
+    if (SetCurrentDirectoryA(path)) {
+        hFindFile = FindFirstFileA("*.???", &findFileData);
+        if (hFindFile != INVALID_HANDLE_VALUE) {
+            do {
+                if ((findFileData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN)) == 0) {
+                    lenFilename = strlen(findFileData.cFileName);
+                    lnk = ".lnk";
+                    lenLnk = strlen(lnk);
+                    if (lenFilename >= lenLnk && PDstricmp(&findFileData.cFileName[lenFilename - lenLnk], ".lnk") == 0) {
+                        memmove(filePath, findFileData.cFileName, lenFilename - lenLnk);
+                        filePath[lenFilename - lenLnk] = '\0';
+                    } else {
+                        memmove(filePath, findFileData.cFileName, lenFilename + 1);
+                    }
+                    callback_res = pCallback(filePath, data);
                 }
-                callback_res = pCallback(filePath, data);
-                if (callback_res != 0) {
-                    break;
-                }
-            }
-            bSucceeded = FindNextFileA(hFindFile, &findFileData);
-            if (!bSucceeded) {
-                break;
-            }
+            } while (callback_res == 0 && FindNextFileA(hFindFile, &findFileData));
+            FindClose(hFindFile);
         }
-        FindClose(hFindFile);
+        SetCurrentDirectoryA(originalCurrentDirectory);
     }
-    SetCurrentDirectoryA(originalCurrentDirectory);
+    return callback_res;
 }
 
 
