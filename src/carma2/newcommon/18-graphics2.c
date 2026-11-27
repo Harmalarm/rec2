@@ -10,6 +10,7 @@
 
 #include "08-loading1.h"
 #include "16-graphics1.h"
+#include "18b-graphics2.h"
 #include "25-grafdata.h"
 #include "33-depth.h"
 #include "35-intrface.h"
@@ -639,22 +640,22 @@ void C2_HOOK_FASTCALL RemoveTransientBitmaps(int pGraphically_remove_them) {
 #pragma auto_inline(on)
 #endif
 
-inline void C2_HOOK_FASTCALL SaveTransient(int pIndex, int pX_coord, int pY_coord) {
-
+inline void C2_HOOK_FASTCALL SaveTransient(int pX_coord, int pY_coord) {
+    /* FIXME: Mac build adds extra "int pIndex" argument, which is usually gCursor_transient_index */
     if (!gNoTransients) {
 
-        gTransient_bitmaps[pIndex].x_coord = pX_coord & ~3;
-        gTransient_bitmaps[pIndex].y_coord = pY_coord;
-        gTransient_bitmaps[pIndex].in_use = 1;
-        gTransient_bitmaps[pIndex].order_number = gNext_transient;
+        gTransient_bitmaps[gCursor_transient_index].x_coord = pX_coord & ~3;
+        gTransient_bitmaps[gCursor_transient_index].y_coord = pY_coord;
+        gTransient_bitmaps[gCursor_transient_index].in_use = 1;
+        gTransient_bitmaps[gCursor_transient_index].order_number = gNext_transient;
         gNext_transient += 1;
-        BrPixelmapRectangleCopy(gTransient_bitmaps[pIndex].pixmap,
+        BrPixelmapRectangleCopy(gTransient_bitmaps[gCursor_transient_index].pixmap,
             0, 0,
             gBack_screen,
-            gTransient_bitmaps[pIndex].x_coord,
-            gTransient_bitmaps[pIndex].y_coord,
-            gTransient_bitmaps[pIndex].pixmap->width,
-            gTransient_bitmaps[pIndex].pixmap->height);
+            gTransient_bitmaps[gCursor_transient_index].x_coord,
+            gTransient_bitmaps[gCursor_transient_index].y_coord,
+            gTransient_bitmaps[gCursor_transient_index].pixmap->width,
+            gTransient_bitmaps[gCursor_transient_index].pixmap->height);
     }
 }
 
@@ -733,7 +734,7 @@ int C2_HOOK_FASTCALL DoMouseCursor(void) {
             required_cursor = new_required;
         }
         gCurrent_cursor_index = 2;
-        SaveTransient(gCursor_transient_index, pos_x - 7, pos_y - 7);
+        SaveTransient(pos_x - 7, pos_y - 7);
         switch (draw_cursor) {
         case 0:
 #ifdef REC2_SW
