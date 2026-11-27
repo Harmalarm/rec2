@@ -515,26 +515,26 @@ void C2_HOOK_FASTCALL PointCameraAtCar(br_vector3* pPos, br_matrix34* pMat, floa
     br_vector3 tv2;
     br_scalar dist;
     br_scalar frac;
-    br_angle theta;
+    br_angle off_centre_angle;
     br_vector3* pos;
     br_camera* camera_ptr;
     int swoop;
 
     camera_ptr = gCamera->type_data;
-    theta = (br_angle)(pFov_factor * camera_ptr->field_of_view / 5.f);
+    off_centre_angle = (br_angle)(pFov_factor / 5.0f * (float)camera_ptr->field_of_view);
     swoop = gCountdown && gCamera_height > pPos->v[1] + 0.01f;
     if (swoop) {
         BrVector3Sub(&tv, &gAverage_grid_position, pPos);
         frac = (gCamera_height - pPos->v[1]) / 10.0f;
         BrVector3Scale(&tv, &tv, frac);
-        BrVector3Add(&tv, pPos, &tv);
+        BrVector3Accumulate(&tv, pPos);
         pos = &tv;
-        theta = (br_angle)((1.0f - frac) * (float)theta);
+        off_centre_angle = (br_angle)((1.0f - frac) * (float)off_centre_angle);
     } else {
         pos = pPos;
     }
     BrVector3Sub(&vn, pPos, (br_vector3*)pMat->m[3]);
-    vn.v[1] = 0.f;
+    vn.v[1] = 0.0f;
     BrVector3Normalise(&vn, &vn);
     pMat->m[0][0] = -vn.v[2];
     pMat->m[0][1] = 0.0f;
@@ -547,7 +547,7 @@ void C2_HOOK_FASTCALL PointCameraAtCar(br_vector3* pPos, br_matrix34* pMat, floa
     pMat->m[2][2] = -vn.v[2];
     BrVector3Sub(&tv2, pos, (br_vector3*)pMat->m[3]);
     dist = BrVector3Dot(&tv2, &vn);
-    BrMatrix34PreRotateX(pMat, theta - BrRadianToAngle(atan2f(pMat->m[3][1] - pos->v[1], dist)));
+    BrMatrix34PreRotateX(pMat, off_centre_angle - BrRadianToAngle(atan2f(pMat->m[3][1] - pos->v[1], dist)));
 }
 
 #ifdef REC2_MATCHING
