@@ -678,7 +678,6 @@ static int MaterialPrimsSupportBlending(const br_material* pMaterial) {
 // FUNCTION: CARMA2_SW 0x0051acd0
 // FUNCTION: CARMA2_CHEAT 0x00525220
 int C2_HOOK_STDCALL IsMaterialTransparent(const br_material* material) {
-    br_token_value* tvp;
 
     if (material != NULL && (MaterialTypeSupportsBlending(material) || MaterialHasIndexBlendTable(material) || MaterialPrimsSupportBlending(material))) {
         return 1;
