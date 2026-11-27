@@ -944,6 +944,7 @@ void C2_HOOK_FASTCALL NetReallyDisposeMessage(tNet_message* pMessage) {
 
 // FUNCTION: CARMA2_HW 0x0049ff70
 // FUNCTION: CARMA2_SW 0x0049c0f0
+// FUNCTION: CARMA2_CHEAT 0x004a0aa0
 tNet_message* C2_HOOK_FASTCALL NetGetNextMessage(tNet_game_details* pDetails, void** pSender_address) {
     tNet_message* message;
 
