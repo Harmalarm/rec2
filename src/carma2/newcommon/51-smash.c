@@ -2045,9 +2045,9 @@ void C2_HOOK_FASTCALL LinkSmashies(br_actor* pActor, tCar_crush_buffer_entry* pC
             }
         }
         if (count_indices != 0) {
-            smashable->field_0x54.v[0] /= (double)count_indices;
-            smashable->field_0x54.v[1] /= (double)count_indices;
-            smashable->field_0x54.v[2] /= (double)count_indices;
+            smashable->field_0x54.v[0] = (br_scalar)(smashable->field_0x54.v[0] / (double)count_indices);
+            smashable->field_0x54.v[1] = (br_scalar)(smashable->field_0x54.v[1] / (double)count_indices);
+            smashable->field_0x54.v[2] = (br_scalar)(smashable->field_0x54.v[2] / (double)count_indices);
         }
         smashable->field_0x6c = count_indices;
         if (count_indices != 0) {
