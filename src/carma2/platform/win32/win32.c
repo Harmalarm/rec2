@@ -1529,14 +1529,16 @@ void C2_HOOK_FASTCALL PDExtractFilename(char *pDest, const char *pPath) {
 }
 
 // FUNCTION: CARMA2_HW 0x0056a349
+// FUNCTION: CARMA2_SW 0x005659e9
+// FUNCTION: CARMA2_CHEAT 0x0056ff31
 void C2_HOOK_FASTCALL PDExtractDirectory(char *pDest, const char *pPath) {
-    char drive[4];
+    char drive_name[4];
     char filename[256];
     char extension[256];
-    char dirname[256];
+    char dir[256];
 
-    _splitpath(pPath, drive, dirname, filename, extension);
-    sprintf(pDest, "%s%s", drive, dirname);
+    _splitpath(pPath, drive_name, dir, filename, extension);
+    sprintf(pDest, "%s%s", drive_name, dir);
 }
 
 #if defined(REC2_MATCHING) && defined(_MSC_VER)
